@@ -6,6 +6,17 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
+web3 = "*"
+uvicorn = "*"
+starlette = "*"
+pyethash = "*"
+marshmallow = "*"
+marshmallow-enum = "*"
+typing-inspect = "*"
+apispec = "*"
+pyyaml = "*"
+aiofiles = "*"
+requests-async = "*"
 
 [requires]
 python_version = "3.7"
