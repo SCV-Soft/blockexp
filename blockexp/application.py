@@ -21,6 +21,14 @@ class Application(Starlette):
 
 def init_app(*, debug=False) -> Starlette:
     app = Application(debug=debug)
+
+    from . import config
+    app.config.update({
+        key: value
+        for key, value in vars(config).items()
+        if not key.startswith('_')
+    })
+
     app.mount('/api', api)
     app.mount('/', create_swagger(apispec))
 
