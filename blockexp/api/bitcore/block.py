@@ -40,8 +40,8 @@ class BlockIdApiPath(ApiPath):
 
 @api.route('/{block_id}', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def get_block(request: Request, path: BlockIdApiPath, provider: Provider) -> str:
-    raise NotImplementedError
+async def get_block(request: Request, path: BlockIdApiPath, provider: Provider) -> Block:
+    return await provider.get_block(path.block_id)
 
 
 @dataclass
