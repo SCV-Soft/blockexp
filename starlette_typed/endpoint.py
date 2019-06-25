@@ -1,10 +1,13 @@
 import functools
 import inspect
+import sys
+import typing
 from asyncio import iscoroutinefunction
+from collections import defaultdict
 from dataclasses import dataclass, field, is_dataclass
 from inspect import Parameter
 from traceback import TracebackException
-from typing import Any
+from typing import Any, Tuple
 from typing import Optional, Callable, Type, Dict, TypeVar, Set, List, get_type_hints
 from typing import cast
 
@@ -14,6 +17,10 @@ from starlette.requests import Request
 from starlette.responses import Response, JSONResponse, PlainTextResponse
 
 from .marshmallow import build_schema, Schema
+
+ExtraHandler = Callable[[Request], Any]
+
+EXTRA_HANDLERS: Dict[str, Dict[str, Callable]] = defaultdict(dict)
 
 T = TypeVar('T')
 
@@ -33,6 +40,24 @@ class Description:
     output_body_cls: Optional[Type] = None
     output_body_many: Optional[bool] = None
     output_type: Optional[Type] = None
+    extras: Dict[str, ExtraHandler] = field(default_factory=dict)
+
+
+def add_handler(name: str, handler: ExtraHandler, *, globals=None) -> ExtraHandler:
+    hints = typing.get_type_hints(handler, sys._getframe(1).f_globals if globals is None else globals)
+
+    return_hint = hints.get('return')
+    if return_hint is None:
+        raise TypeError('return annotation is missing')
+
+    EXTRA_HANDLERS[name][return_hint] = handler
+
+    return handler
+
+
+def register_handler(handler: ExtraHandler) -> ExtraHandler:
+    add_handler(handler.__name__, handler, globals=sys._getframe(1).f_globals)
+    return handler
 
 
 def get_description(view_func: Callable) -> Optional[Description]:
@@ -90,11 +115,20 @@ def fill_description(view_func: Callable, description: Description):
             description.input_body = build_schema(cls, is_nested=True)
         elif name == "return":
             return_annotation = cls
+        elif name in EXTRA_HANDLERS:
+            extra_handlers = EXTRA_HANDLERS.get(name)
+            if extra_handlers is None:
+                unknown_names.add(name)
+            else:
+                extra_handler = extra_handlers.get(cls)
+                if extra_handler is None:
+                    unknown_names.add(name)
+                else:
+                    description.extras[name] = extra_handler
         else:
             unknown_names.add(name)
 
     if return_annotation is not None:
-
         if issubclass(return_annotation, Response):
             description.output = return_annotation
         else:
@@ -146,9 +180,14 @@ def build_new_view_func(view_func: Callable, description: Description):
     @functools.wraps(view_func)
     async def view_func(request: Request):
         try:
-            kwargs = await parse_request(request, description)
+            kwargs, context = await parse_request(request, description)
 
-            response = await func(request, **kwargs)
+            try:
+                response = await func(request, **kwargs)
+            finally:
+                exc_info = sys.exc_info()
+                for ctx in context.values():
+                    await ctx.__aexit__(*exc_info)
 
             return build_response(response, description)
         except Exception as exc:
@@ -158,8 +197,9 @@ def build_new_view_func(view_func: Callable, description: Description):
     return view_func
 
 
-async def parse_request(request: Request, description: Description) -> dict:
+async def parse_request(request: Request, description: Description) -> Tuple[dict, dict]:
     result = {}
+    context = {}
 
     if description.input_headers is not None:
         result['headers'] = description.input_headers.load(dict(request.headers.items()))
@@ -176,7 +216,11 @@ async def parse_request(request: Request, description: Description) -> dict:
     if description.input_body is not None:
         result['body'] = description.input_body.load(await request.json())
 
-    return result
+    for name, handler in description.extras.items():
+        context[name] = ctx = handler(request)
+        result[name] = await ctx.__aenter__()
+
+    return result, context
 
 
 def build_response(result: Any, description: Description) -> Response:
