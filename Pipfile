@@ -10,13 +10,17 @@ web3 = "*"
 uvicorn = "*"
 starlette = "*"
 pyethash = "*"
-marshmallow = "*"
+marshmallow = "==3.0.0rc7"
 marshmallow-enum = "*"
 typing-inspect = "*"
 apispec = "*"
 pyyaml = "*"
 aiofiles = "*"
 requests-async = "*"
+motor = "==2.0.0"
 
 [requires]
 python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true
