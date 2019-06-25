@@ -77,12 +77,12 @@ def parse_dataclass(cls: typing.Type, name: str = None) -> typing.Type[Schema]:
 
     class BaseSchema(Schema):
         @marshmallow.post_load
-        def make_dataclass(self, data):
+        def make_dataclass(self, data, *, many, partial):
             return cls(**data)
 
         if safe_name:
             @marshmallow.pre_load
-            def prepare_dataclass(self, data):
+            def prepare_dataclass(self, data, *, many, partial):
                 for safe, unsafe in safe_name.items():
                     if unsafe in data:
                         data[safe] = data.pop(unsafe)
@@ -90,7 +90,7 @@ def parse_dataclass(cls: typing.Type, name: str = None) -> typing.Type[Schema]:
                 return data
 
             @marshmallow.post_dump
-            def make_object(self, data):
+            def make_object(self, data, *, many, partial):
                 return {safe_name.get(key, key): value
                         for key, value in data.items()}
 
