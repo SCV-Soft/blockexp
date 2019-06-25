@@ -3,7 +3,6 @@ from typing import Any
 from starlette.applications import Starlette
 
 from swagger.ui import create_swagger
-from .api import api, apispec
 
 
 class Application(Starlette):
@@ -29,7 +28,10 @@ def init_app(*, debug=False) -> Starlette:
         if not key.startswith('_')
     })
 
+    from .api import api
     app.mount('/api', api)
+
+    from .api import apispec
     app.mount('/', create_swagger(apispec))
 
     return app
