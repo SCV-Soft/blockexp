@@ -28,6 +28,9 @@ def init_app(*, debug=False) -> Starlette:
         if not key.startswith('_')
     })
 
+    from .ext import database
+    app.register_extension(database)
+
     from .api import api
     app.mount('/api', api)
 
