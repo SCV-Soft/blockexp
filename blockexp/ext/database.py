@@ -17,6 +17,7 @@ from motor.motor_asyncio import (
 from pymongo.results import InsertOneResult, InsertManyResult, DeleteResult, UpdateResult
 from starlette.requests import Request
 
+from starlette_typed.endpoint import register_handler
 from ..application import Application
 
 if TYPE_CHECKING:
@@ -232,6 +233,14 @@ class MongoCollection:
 if TYPE_CHECKING:
     MongoCollection = Union[MongoCollection, AgnosticCollection]
     MongoCursor = Union[MongoCollection, AgnosticCursor]
+
+
+@register_handler
+@asynccontextmanager
+async def db(request: Request) -> MongoDatabase:
+    async with connect_database(request) as database:
+        async with database:
+            yield database
 
 
 class DatabasePool:
