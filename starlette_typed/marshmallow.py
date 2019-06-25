@@ -200,6 +200,10 @@ def parse_type(cls: typing.Type,
         return mm_fields.Mapping(
             **update_missing(metadata, dc_field),
         )
+    elif cls == typing.Any:
+        return mm_fields.Raw(
+            **update_missing(metadata, dc_field),
+        )
     else:
         mm_field_type = BaseSchema.TYPE_MAPPING.get(cls, mm_fields.Raw)
         if mm_field_type is mm_fields.Raw:
