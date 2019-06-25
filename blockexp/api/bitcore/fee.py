@@ -5,6 +5,7 @@ from starlette.routing import Router
 
 from starlette_typed import typed_endpoint
 from . import ApiPath
+from ...provider import Provider
 
 api = Router()
 
@@ -16,5 +17,5 @@ class GetFeeApiPath(ApiPath):
 
 @api.route('/{target}', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def get_fee(request: Request, path: GetFeeApiPath) -> str:
+async def get_fee(request: Request, path: GetFeeApiPath, provider: Provider) -> str:
     raise NotImplementedError

@@ -1,5 +1,6 @@
-from starlette.routing import Router
 from dataclasses import dataclass
+
+from starlette.routing import Router
 
 
 @dataclass

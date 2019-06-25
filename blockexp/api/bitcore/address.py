@@ -5,6 +5,7 @@ from starlette.routing import Router
 
 from starlette_typed import typed_endpoint
 from . import ApiPath
+from ...provider import Provider
 
 api = Router()
 
@@ -23,17 +24,19 @@ class AddressApiQuery:
 
 @api.route('/{address}/txs', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def stream_address_transactions(request: Request, path: AddressApiPath, query: AddressApiQuery) -> str:
+async def stream_address_transactions(request: Request, path: AddressApiPath, query: AddressApiQuery,
+                                      provider: Provider) -> str:
     raise NotImplementedError
 
 
 @api.route('/{address}', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def stream_address_utxos(request: Request, path: AddressApiPath, query: AddressApiQuery) -> str:
+async def stream_address_utxos(request: Request, path: AddressApiPath, query: AddressApiQuery,
+                               provider: Provider) -> str:
     raise NotImplementedError
 
 
 @api.route('/{address}/balance', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def get_balance_for_address(request: Request, path: AddressApiPath) -> str:
+async def get_balance_for_address(request: Request, path: AddressApiPath, provider: Provider) -> str:
     raise NotImplementedError

@@ -4,7 +4,7 @@ from starlette.routing import Router
 
 from starlette_typed import TypedStarlettePlugin
 from starlette_typed.apispec import patch_apispec_orderdict
-from . import bitcore
+from . import bitcore, eth
 
 patch_apispec_orderdict()
 
@@ -19,4 +19,6 @@ apispec = APISpec(
 )
 
 api = Router()
+
+api.mount('/eth', eth.api)
 api.mount('/', bitcore.api)

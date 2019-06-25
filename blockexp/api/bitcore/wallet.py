@@ -5,6 +5,7 @@ from starlette.routing import Router
 
 from starlette_typed import typed_endpoint
 from . import ApiPath
+from ...provider import Provider
 
 api = Router()
 
@@ -24,13 +25,13 @@ class CreateWalletApiBody:
 
 @api.route('/', methods=['POST'])
 @typed_endpoint(tags=["bitcore"])
-async def create_wallet(request: Request, path: ApiPath, body: CreateWalletApiBody) -> str:
+async def create_wallet(request: Request, path: ApiPath, body: CreateWalletApiBody, provider: Provider) -> str:
     raise NotImplementedError
 
 
 @api.route('/{pub_key}/addresses/missing', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def stream_missing_wallet_addresses(request: Request, path: WalletApiPath) -> str:
+async def stream_missing_wallet_addresses(request: Request, path: WalletApiPath, provider: Provider) -> str:
     raise NotImplementedError
 
 
@@ -42,31 +43,32 @@ class LimitApiQuery:
 
 @api.route('/{pub_key}/addresses', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def stream_wallet_addresses(request: Request, path: WalletApiPath, query: LimitApiQuery) -> str:
+async def stream_wallet_addresses(request: Request, path: WalletApiPath, query: LimitApiQuery,
+                                  provider: Provider) -> str:
     raise NotImplementedError
 
 
 @api.route('/{pub_key}/check', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def wallet_check(request: Request, path: WalletApiPath) -> str:
+async def wallet_check(request: Request, path: WalletApiPath, provider: Provider) -> str:
     raise NotImplementedError
 
 
 @api.route('/{pub_key}', methods=['POST'])
 @typed_endpoint(tags=["bitcore"])
-async def update_wallet(request: Request, path: WalletApiPath) -> str:
+async def update_wallet(request: Request, path: WalletApiPath, provider: Provider) -> str:
     raise NotImplementedError
 
 
 @api.route('/{pub_key}/transactions', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def stream_wallet_transactions(request: Request, path: WalletApiPath) -> str:
+async def stream_wallet_transactions(request: Request, path: WalletApiPath, provider: Provider) -> str:
     raise NotImplementedError
 
 
 @api.route('/{pub_key}/balance', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def get_wallet_balance(request: Request, path: WalletApiPath) -> str:
+async def get_wallet_balance(request: Request, path: WalletApiPath, provider: Provider) -> str:
     raise NotImplementedError
 
 
@@ -77,17 +79,17 @@ class WalletTimeApiRequest(WalletApiPath):
 
 @api.route('/{pub_key}/balance/{time}', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def get_wallet_balance_at_time(request: Request, path: WalletTimeApiRequest) -> str:
+async def get_wallet_balance_at_time(request: Request, path: WalletTimeApiRequest, provider: Provider) -> str:
     raise NotImplementedError
 
 
 @api.route('/{pub_key}/utxos', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def stream_wallet_utxos(request: Request, path: WalletApiPath, query: LimitApiQuery) -> str:
+async def stream_wallet_utxos(request: Request, path: WalletApiPath, query: LimitApiQuery, provider: Provider) -> str:
     raise NotImplementedError
 
 
 @api.route('/{pub_key}', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def pubkey(request: Request, path: WalletApiPath) -> str:
+async def pubkey(request: Request, path: WalletApiPath, provider: Provider) -> str:
     raise NotImplementedError
