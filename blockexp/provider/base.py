@@ -32,6 +32,12 @@ class Provider:
         self.chain = chain
         self.network = network
 
+    async def __aenter__(self):
+        pass
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        pass
+
     async def stream_address_transactions(self,
                                           address: str,
                                           unspent: bool,

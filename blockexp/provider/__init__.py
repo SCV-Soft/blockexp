@@ -17,8 +17,7 @@ async def provider(request: Request) -> Provider:
     # noinspection PyShadowingNames
     provider = get_provider(chain, network)
 
-    if "async with":
-        # TODO: async with?
+    async with provider:
         yield provider
 
 
