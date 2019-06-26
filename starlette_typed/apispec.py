@@ -123,7 +123,7 @@ class TypedStarlettePlugin(BasePlugin):
             response_content = response["content"]
 
             if description.output:
-                media_type = description.output.media_type
+                media_type = CONTENT_JSON if description.output == Any else description.output.media_type
                 assert media_type, description.output
                 if media_type == CONTENT_JSON:
                     response_content[media_type] = {"schema": self._convert_field(fields.Raw())}

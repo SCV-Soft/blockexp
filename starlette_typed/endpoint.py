@@ -129,7 +129,9 @@ def fill_description(view_func: Callable, description: Description):
             unknown_names.add(name)
 
     if return_annotation is not None:
-        if issubclass(return_annotation, Response):
+        if return_annotation == Any:
+            description.output = return_annotation
+        elif inspect.isclass(return_annotation) and issubclass(return_annotation, Response):
             description.output = return_annotation
         else:
             many = False
@@ -225,8 +227,11 @@ async def parse_request(request: Request, description: Description) -> Tuple[dic
 
 def build_response(result: Any, description: Description) -> Response:
     if description.output is not None:
-        assert isinstance(result, description.output)
-        return result
+        if description.output == Any:
+            return JSONResponse(result)
+        else:
+            assert isinstance(result, description.output)
+            return result
     elif description.output_body is not None:
         return JSONResponse(description.output_body.dump(result))
     elif description.output_type is not None:
