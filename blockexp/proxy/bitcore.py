@@ -10,6 +10,13 @@ class AsyncBitcore:
         self.url = self.URL.format(chain=chain, network=network)
         self.session = requests.Session()
 
+    async def __aenter__(self):
+        await self.session.__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return await self.session.__aexit__(exc_type, exc_val, exc_tb)
+
     def get_url(self, path: str) -> str:
         return urljoin(self.url, path)
 
