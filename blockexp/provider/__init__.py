@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from starlette.requests import Request
 
 from starlette_typed.endpoint import register_handler
-from .base import Provider
+from .base import Provider, Direction, SteamingFindOptions
 from .bitcore import BitcoreProvider
 
 

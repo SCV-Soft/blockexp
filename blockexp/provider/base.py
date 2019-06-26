@@ -2,8 +2,6 @@ from dataclasses import dataclass
 from enum import IntEnum
 from typing import Union, Any, TypeVar, Generic, List
 
-from bson import ObjectId
-
 from ..model import Block, Transaction, CoinListing, Authhead, TransactionId, AddressBalance, EstimateFee
 
 T = TypeVar('T')
