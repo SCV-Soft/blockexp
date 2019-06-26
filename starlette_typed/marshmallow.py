@@ -13,13 +13,18 @@ import typing_inspect
 from marshmallow import fields as mm_fields
 from marshmallow.schema import Schema, BaseSchema
 
-__all__ = ['schema', 'Schema', 'build_schema']
+__all__ = ['schema', 'Schema', 'build_schema', 'check_schema']
 
 # noinspection PyRedeclaration
 Schema: typing.Type[BaseSchema]
 
 
-def build_schema(cls: typing.Type, *, is_nested: bool, many=False) -> Schema:
+def check_schema(cls: typing.Type):
+    build_schema(cls)
+    return cls
+
+
+def build_schema(cls: typing.Type, *, is_nested: bool = False, many=False) -> Schema:
     # TODO: is_nested
     return schema(cls, many=many)
 
