@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Union, Any, TypeVar, Generic
+from typing import Union, Any, TypeVar, Generic, List
 
 from bson import ObjectId
 
-from ..model import Block
+from ..model import Block, Transaction, CoinListing, Authhead, TransactionId, AddressBalance, EstimateFee
 
 T = TypeVar('T')
 
@@ -16,11 +16,11 @@ class Direction(IntEnum):
 
 @dataclass
 class SteamingFindOptions(Generic[T]):
-    paging: T
-    since: ObjectId
-    sort: Any
-    direction: Direction
-    limit: int
+    paging: T = None
+    since: str = None
+    sort: Any = None
+    direction: Direction = None
+    limit: int = None
 
 
 @dataclass(init=False)
@@ -32,32 +32,40 @@ class Provider:
         self.chain = chain
         self.network = network
 
-    async def stream_address_transactions(self):
+    async def stream_address_transactions(self,
+                                          address: str,
+                                          unspent: bool,
+                                          find_options: SteamingFindOptions) -> List[Any]:
         raise NotImplementedError
 
-    async def get_balance_for_address(self):
+    async def stream_address_utxos(self, address: str, unspent: bool, find_options: SteamingFindOptions) -> List[Any]:
         raise NotImplementedError
 
-    async def get_blocks(self,
-                         block_id: str = None,
-                         since_block: Union[int, str] = None,
-                         find_options: SteamingFindOptions[Block] = None):
+    async def get_balance_for_address(self, address: str) -> AddressBalance:
         raise NotImplementedError
 
-    async def get_block(self,
-                        block_id: str = None) -> Block:
+    async def stream_blocks(self,
+                            since_block: Union[int, str] = None,
+                            date: str = None,
+                            find_options: SteamingFindOptions[Block] = None) -> List[Block]:
         raise NotImplementedError
 
-    async def stream_transactions(self):
+    async def get_block(self, block_id: str = None) -> Block:
         raise NotImplementedError
 
-    async def get_transaction(self):
+    async def stream_transactions(self,
+                                  block_height: int,
+                                  block_hash: str,
+                                  find_options: SteamingFindOptions) -> List[Transaction]:
         raise NotImplementedError
 
-    async def get_authhead(self):
+    async def get_transaction(self, tx_id: str) -> Transaction:
         raise NotImplementedError
 
-    async def create_wallet(self):
+    async def get_authhead(self, tx_id: str) -> Authhead:
+        raise NotImplementedError
+
+    async def create_wallet(self, name: str, pub_key: str, path: str, single_address: bool) -> Any:
         raise NotImplementedError
 
     async def wallet_check(self):
@@ -81,19 +89,19 @@ class Provider:
     async def stream_wallet_utxos(self):
         raise NotImplementedError
 
-    async def get_fee(self):
+    async def get_fee(self, target: int) -> EstimateFee:
         raise NotImplementedError
 
-    async def broadcast_transaction(self):
+    async def broadcast_transaction(self, raw_tx: Any) -> TransactionId:
         raise NotImplementedError
 
-    async def get_coins_for_tx(self):
+    async def get_coins_for_tx(self, tx_id: str) -> CoinListing:
         raise NotImplementedError
 
-    async def get_daily_transactions(self):
+    async def get_daily_transactions(self) -> Any:
         raise NotImplementedError
 
-    async def get_local_tip(self):
+    async def get_local_tip(self) -> Block:
         raise NotImplementedError
 
     async def get_locator_hashes(self):
