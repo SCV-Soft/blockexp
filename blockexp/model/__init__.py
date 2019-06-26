@@ -1,7 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, is_dataclass
 from typing import List, Optional
 
-from starlette_typed.marshmallow import schema
+from starlette_typed.marshmallow import check_schema
 
 
 @dataclass
@@ -93,3 +93,8 @@ class AddressBalance:
 class EstimateFee:
     feerate: float
     blocks: int
+
+
+for cls in list(globals().values()):
+    if is_dataclass(cls):
+        check_schema(cls)
