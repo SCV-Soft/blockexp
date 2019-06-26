@@ -8,8 +8,8 @@ from starlette_typed.marshmallow import schema
 class Block:
     _id: str
     chain: str
-    confirmations: Optional[int]
     network: str
+    confirmations: Optional[int]
     height: int
     hash: str
     version: int
@@ -29,8 +29,8 @@ class Block:
 @dataclass
 class Coin:
     _id: str
-    network: str
     chain: str
+    network: str
     mintTxid: str
     mintIndex: int
     mintHeight: int
@@ -43,6 +43,7 @@ class Coin:
     confirmations: Optional[int]
 
 
+@dataclass
 class CoinListing:
     inputs: List[Coin]
     outputs: List[Coin]
@@ -73,6 +74,7 @@ class Transaction:
     inputCount: int
     outputCount: int
     value: int
+    confirmations: Optional[int] = None
 
 
 @dataclass
