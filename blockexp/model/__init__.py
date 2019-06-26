@@ -26,9 +26,6 @@ class Block:
     processed: Optional[bool] = None
 
 
-BlockSchema = schema(Block)
-
-
 @dataclass
 class Coin:
     _id: str
