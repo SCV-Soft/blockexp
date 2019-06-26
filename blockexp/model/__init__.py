@@ -51,6 +51,15 @@ class CoinListing:
     outputs: List[Coin]
 
 
+@dataclass
+class Authhead:
+    chain: str
+    network: str
+    authbase: str
+    identityOutputs: List[Coin]
+
+
+@dataclass
 class Transaction:
     _id: str
     txid: str
@@ -67,3 +76,21 @@ class Transaction:
     inputCount: int
     outputCount: int
     value: int
+
+
+@dataclass
+class TransactionId:
+    txid: str
+
+
+@dataclass
+class AddressBalance:
+    confirmed: int = 0
+    unconfirmed: int = 0
+    balance: int = 0
+
+
+@dataclass
+class EstimateFee:
+    feerate: float
+    blocks: int
