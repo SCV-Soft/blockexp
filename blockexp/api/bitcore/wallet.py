@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from starlette.requests import Request
 from starlette.routing import Router
@@ -20,13 +21,18 @@ class CreateWalletApiBody:
     name: str
     pubKey: str
     path: str
-    singleAddress: str
+    singleAddress: bool
 
 
 @api.route('/', methods=['POST'])
 @typed_endpoint(tags=["bitcore"])
-async def create_wallet(request: Request, path: ApiPath, body: CreateWalletApiBody, provider: Provider) -> str:
-    raise NotImplementedError
+async def create_wallet(request: Request, path: ApiPath, body: CreateWalletApiBody, provider: Provider) -> Any:
+    return await provider.create_wallet(
+        name=body.name,
+        pub_key=body.pubKey,
+        path=body.path,
+        single_address=body.singleAddress,
+    )
 
 
 @api.route('/{pub_key}/addresses/missing', methods=['GET'])

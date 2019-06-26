@@ -1,3 +1,5 @@
+from typing import Any
+
 from starlette.requests import Request
 from starlette.routing import Router
 
@@ -10,5 +12,5 @@ api = Router()
 
 @api.route('/daily-transactions', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def get_daily_transactions(request: Request, path: ApiPath, provider: Provider) -> str:
-    raise NotImplementedError
+async def get_daily_transactions(request: Request, path: ApiPath, provider: Provider) -> Any:
+    return await provider.get_daily_transactions()

@@ -1,10 +1,13 @@
 from dataclasses import dataclass
+from typing import List
 
 from starlette.requests import Request
 from starlette.routing import Router
 
+from blockexp.provider import SteamingFindOptions, Direction
 from starlette_typed import typed_endpoint
 from . import ApiPath
+from ...model import Transaction, CoinListing, Authhead
 from ...provider import Provider
 
 api = Router()
@@ -17,37 +20,45 @@ class TransactionApiPath(ApiPath):
 
 @dataclass
 class TxIndexApiQuery:
-    blockHeight: int
-    blockHash: str
-    limit: int
-    since: str
-    direction: str
-    paging: str
+    blockHeight: int = None
+    blockHash: str = None
+    limit: int = None
+    since: str = None
+    direction: Direction = None
+    paging: str = None
 
 
 @api.route('/', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def stream_transactions(request: Request, path: ApiPath, query: TxIndexApiQuery, provider: Provider) -> str:
-    raise NotImplementedError
+async def stream_transactions(request: Request, path: ApiPath, query: TxIndexApiQuery, provider: Provider) -> List[Transaction]:
+    return await provider.stream_transactions(
+        block_height=query.blockHeight,
+        block_hash=query.blockHash,
+        find_options=SteamingFindOptions(
+            limit=query.limit,
+            since=query.since,
+            direction=query.direction,
+            paging=query.paging,
+        )
+    )
 
 
 @api.route('/{tx_id}', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def get_transaction(request: Request, path: TransactionApiPath, provider: Provider) -> str:
-    # TODO: get_local_tip
-    raise NotImplementedError
+async def get_transaction(request: Request, path: TransactionApiPath, provider: Provider) -> Transaction:
+    return await provider.get_transaction(path.tx_id)
 
 
 @api.route('/{tx_id}/authhead', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def get_authhead(request: Request, path: TransactionApiPath, provider: Provider) -> str:
-    raise NotImplementedError
+async def get_authhead(request: Request, path: TransactionApiPath, provider: Provider) -> Authhead:
+    return await provider.get_authhead(path.tx_id)
 
 
 @api.route('/{tx_id}/coins', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def get_coins_for_tx(request: Request, path: TransactionApiPath, provider: Provider) -> str:
-    raise NotImplementedError
+async def get_coins_for_tx(request: Request, path: TransactionApiPath, provider: Provider) -> CoinListing:
+    return await provider.get_coins_for_tx(path.tx_id)
 
 
 @api.route('/send', methods=['POST'])
