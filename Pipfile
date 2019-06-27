@@ -18,6 +18,8 @@ pyyaml = "*"
 aiofiles = "*"
 requests-async = "*"
 motor = "==2.0.0"
+aioredis = "*"
+tqdm = "*"
 
 [requires]
 python_version = "3.7"
