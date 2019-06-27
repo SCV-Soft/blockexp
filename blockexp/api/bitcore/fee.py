@@ -12,7 +12,8 @@ api = Router()
 
 
 @dataclass
-class GetFeeApiPath(ApiPath): = None
+class GetFeeApiPath(ApiPath):
+    target: int = None
 
 
 @api.route('/{target:int}', methods=['GET'])
