@@ -52,7 +52,11 @@ class BlockIdApiPath(ApiPath):
 @api.route('/{block_id}', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
 async def get_block(request: Request, path: BlockIdApiPath, provider: Provider) -> Block:
-    return await provider.get_block(path.block_id)
+    block_id = path.block_id
+    if block_id.isdecimal():
+        block_id = int(block_id)
+
+    return await provider.get_block(block_id)
 
 
 @dataclass
