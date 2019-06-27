@@ -49,12 +49,12 @@ class Provider:
         raise NotImplementedError
 
     async def stream_blocks(self,
-                            since_block: Union[int, str] = None,
+                            since_block: Union[str, int] = None,
                             date: str = None,
                             find_options: SteamingFindOptions[Block] = None) -> List[Block]:
         raise NotImplementedError
 
-    async def get_block(self, block_id: str = None) -> Block:
+    async def get_block(self, block_id: Union[str, int]) -> Block:
         raise NotImplementedError
 
     async def get_full_block(self, block_id: str) -> Tuple[Block, List[Transaction]]:

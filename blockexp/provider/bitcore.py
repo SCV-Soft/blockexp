@@ -86,7 +86,7 @@ class BitcoreProvider(Provider):
         return await self._get(AddressBalance, f'address/{address}/balance')
 
     async def stream_blocks(self,
-                            since_block: Union[int, str] = None,
+                            since_block: Union[str, int] = None,
                             date: str = None,
                             find_options: SteamingFindOptions[Block] = None) -> List[Block]:
         return await self._get(List[Block], f'block/', params={
@@ -98,7 +98,7 @@ class BitcoreProvider(Provider):
             'paging': find_options.paging,
         })
 
-    async def get_block(self, block_id: str = None) -> Block:
+    async def get_block(self, block_id: Union[str, int]) -> Block:
         return await self._get(Block, f'block/{block_id}')
 
     async def stream_transactions(self,
