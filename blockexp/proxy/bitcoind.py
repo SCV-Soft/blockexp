@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, List
 
 from .jsonrpc import AsyncJsonRPC
 
@@ -91,59 +91,121 @@ class AsyncBitcoreDeamon(AsyncJsonRPC):
     async def generatetoaddress(self, *args):
         return await self.call('generatetoaddress', *args)
 
-    async def getaddednodeinfo(self, *args):
-        return await self.call('getaddednodeinfo', *args)
+    async def getaddednodeinfo(self, node: str = None):
+        """
+        Returns information about the given added node, or all added nodes
+        (note that onetry addnodes are not listed here)
+        """
+        if node is None:
+            return await self.call('getaddednodeinfo')
+        else:
+            return await self.call('getaddednodeinfo', node)
 
-    async def getaddressesbylabel(self, *args):
-        return await self.call('getaddressesbylabel', *args)
+    async def getaddressesbylabel(self, label: str) -> dict:
+        """
+        Returns the list of addresses assigned the specified label.
+        """
+        return await self.call('getaddressesbylabel', label)
 
-    async def getaddressinfo(self, *args):
-        return await self.call('getaddressinfo', *args)
+    async def getaddressinfo(self, address: str) -> dict:
+        """
+        Return information about the given bitcoin address. Some information requires the address
+        to be in the wallet.
+        """
+        return await self.call('getaddressinfo', address)
 
-    async def getbalance(self, *args):
-        return await self.call('getbalance', *args)
+    async def getbalance(self, dummy: str = "*", minconf: int = 0, include_watchonly: bool = False) -> float:
+        """
+        Returns the total available balance.
+        The available balance is what the wallet considers currently spendable, and is
+        thus affected by options which limit spendability such as -spendzeroconfchange.
+        """
+        return await self.call('getbalance', dummy, minconf, include_watchonly)
 
-    async def getbestblockhash(self, *args):
-        return await self.call('getbestblockhash', *args)
+    async def getbestblockhash(self) -> str:
+        """
+        Returns the hash of the best (tip) block in the longest blockchain.
+        """
+        return await self.call('getbestblockhash')
 
     async def getblock(self, blockhash: str, verbosity: int = 1) -> Union[str, dict]:
+        """
+        If verbosity is 0, returns a string that is serialized, hex-encoded data for block 'hash'.
+        If verbosity is 1, returns an Object with information about block <hash>.
+        If verbosity is 2, returns an Object with information about block <hash> and information about each transaction.
+        """
         return await self.call('getblock', blockhash, verbosity)
 
-    async def getblockchaininfo(self, *args):
-        return await self.call('getblockchaininfo', *args)
+    async def getblockchaininfo(self) -> dict:
+        """Returns an object containing various state info regarding blockchain processing."""
+        return await self.call('getblockchaininfo')
 
-    async def getblockcount(self, *args):
-        return await self.call('getblockcount', *args)
+    async def getblockcount(self) -> int:
+        """Returns the number of blocks in the longest blockchain."""
+        return await self.call('getblockcount')
 
-    async def getblockhash(self, *args):
-        return await self.call('getblockhash', *args)
+    async def getblockhash(self, height: int) -> str:
+        """Returns hash of block in best-block-chain at height provided."""
+        return await self.call('getblockhash', height)
 
-    async def getblockheader(self, *args):
-        return await self.call('getblockheader', *args)
+    async def getblockheader(self, blockhash: str, verbose: bool = True):
+        """
+        If verbose is false, returns a string that is serialized, hex-encoded data for blockheader 'hash'.
+        If verbose is true, returns an Object with information about blockheader <hash>.
+        """
+        return await self.call('getblockheader', blockhash, verbose)
 
-    async def getblockstats(self, *args):
-        return await self.call('getblockstats', *args)
+    async def getblockstats(self, hash_or_height: Union[str, int], stats: List[str] = None):
+        """
+        Compute per block statistics for a given window. All amounts are in satoshis.
+        It won't work for some heights with pruning.
+        It won't work without -txindex for utxo_size_inc, *fee or *feerate stats.
+        """
+        if stats is None:
+            return await self.call('getblockstats', hash_or_height)
+        else:
+            return await self.call('getblockstats', hash_or_height, stats)
 
-    async def getblocktemplate(self, *args):
-        return await self.call('getblocktemplate', *args)
+    async def getblocktemplate(self, template_request: dict) -> dict:
+        """
+        If the request parameters include a 'mode' key, that is used to explicitly select between the default 'template' request or a 'proposal'.
+        It returns data needed to construct a block to work on.
+        For full specification, see BIPs 22, 23, 9, and 145:
+            https://github.com/bitcoin/bips/blob/master/bip-0022.mediawiki
+            https://github.com/bitcoin/bips/blob/master/bip-0023.mediawiki
+            https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki#getblocktemplate_changes
+            https://github.com/bitcoin/bips/blob/master/bip-0145.mediawiki
+        """
+        return await self.call('getblocktemplate', template_request)
 
-    async def getchaintips(self, *args):
-        return await self.call('getchaintips', *args)
+    async def getchaintips(self) -> List[dict]:
+        """
+        Return information about all known tips in the block tree, including the main chain as well as orphaned branches.
+        """
+        return await self.call('getchaintips')
 
-    async def getchaintxstats(self, *args):
-        return await self.call('getchaintxstats', *args)
+    async def getchaintxstats(self, nblocks: int, blockhash: str = None) -> dict:
+        """Compute statistics about the total number and rate of transactions in the chain."""
+        if blockhash is None:
+            return await self.call('getchaintxstats', nblocks)
+        else:
+            return await self.call('getchaintxstats', nblocks, blockhash)
 
-    async def getconnectioncount(self, *args):
-        return await self.call('getconnectioncount', *args)
+    async def getconnectioncount(self) -> int:
+        """Returns the number of connections to other nodes."""
+        return await self.call('getconnectioncount')
 
-    async def getdescriptorinfo(self, *args):
-        return await self.call('getdescriptorinfo', *args)
+    async def getdescriptorinfo(self, descriptor: str) -> dict:
+        """Analyses a descriptor."""
+        return await self.call('getdescriptorinfo', descriptor)
 
-    async def getdifficulty(self, *args):
-        return await self.call('getdifficulty', *args)
+    async def getdifficulty(self) -> float:
+        """Returns the proof-of-work difficulty as a multiple of the minimum difficulty."""
+        return await self.call('getdifficulty')
 
-    async def getmemoryinfo(self, *args):
-        return await self.call('getmemoryinfo', *args)
+    async def getmemoryinfo(self, mode: str = "stats") -> dict:
+        """Returns an object containing information about memory usage."""
+        return await self.call('getmemoryinfo', mode)
 
     async def getmempoolancestors(self, *args):
         return await self.call('getmempoolancestors', *args)
@@ -163,11 +225,17 @@ class AsyncBitcoreDeamon(AsyncJsonRPC):
     async def getnettotals(self, *args):
         return await self.call('getnettotals', *args)
 
-    async def getnetworkhashps(self, *args):
-        return await self.call('getnetworkhashps', *args)
+    async def getnetworkhashps(self, nblocks: int = 120, height: int = -1) -> int:
+        """
+        Returns the estimated network hashes per second based on the last n blocks.
+        Pass in [blocks] to override # of blocks, -1 specifies since last difficulty change.
+        Pass in [height] to estimate the network speed at the time when a certain block was found.
+        """
+        return await self.call('getnetworkhashps', nblocks, height)
 
-    async def getnetworkinfo(self, *args):
-        return await self.call('getnetworkinfo', *args)
+    async def getnetworkinfo(self) -> dict:
+        """Returns an object containing various state info regarding P2P networking."""
+        return await self.call('getnetworkinfo')
 
     async def getnewaddress(self, *args):
         return await self.call('getnewaddress', *args)
@@ -175,17 +243,44 @@ class AsyncBitcoreDeamon(AsyncJsonRPC):
     async def getnodeaddresses(self, *args):
         return await self.call('getnodeaddresses', *args)
 
-    async def getpeerinfo(self, *args):
-        return await self.call('getpeerinfo', *args)
+    async def getpeerinfo(self) -> List[dict]:
+        """Returns data about each connected network node as a json array of objects."""
+        return await self.call('getpeerinfo')
 
-    async def getrawchangeaddress(self, *args):
-        return await self.call('getrawchangeaddress', *args)
+    async def getrawchangeaddress(self, address_type: str) -> str:
+        """
+        Returns a new Bitcoin address, for receiving change.
+        This is for use with raw transactions, NOT normal use.
+        """
+        return await self.call('getrawchangeaddress', address_type)
 
-    async def getrawmempool(self, *args):
-        return await self.call('getrawmempool', *args)
+    async def getrawmempool(self, verbose: bool = False) -> Union[list, dict]:
+        """
+        Returns all transaction ids in memory pool as a json array of string transaction ids.
 
-    async def getrawtransaction(self, *args):
-        return await self.call('getrawtransaction', *args)
+        Hint: use getmempoolentry to fetch a specific transaction from the mempool.
+        """
+        return await self.call('getrawmempool', verbose)
+
+    async def getrawtransaction(self, txid: str, verbose: bool = True, blockhash: str = None) -> Union[str, dict]:
+        """
+        Return the raw transaction data.
+
+        By default this function only works for mempool transactions. When called with a blockhash
+        argument, getrawtransaction will return the transaction if the specified block is available and
+        the transaction is found in that block. When called without a blockhash argument, getrawtransaction
+        will return the transaction if it is in the mempool, or if -txindex is enabled and the transaction
+        is in a block in the blockchain.
+
+        Hint: Use gettransaction for wallet transactions.
+
+        If verbose is 'true', returns an Object with information about 'txid'.
+        If verbose is 'false' or omitted, returns a string that is serialized, hex-encoded data for 'txid'.
+        """
+        if blockhash is None:
+            return await self.call('getrawtransaction', txid, verbose)
+        else:
+            return await self.call('getrawtransaction', txid, verbose, blockhash)
 
     async def getreceivedbyaddress(self, *args):
         return await self.call('getreceivedbyaddress', *args)
@@ -193,29 +288,48 @@ class AsyncBitcoreDeamon(AsyncJsonRPC):
     async def getreceivedbylabel(self, *args):
         return await self.call('getreceivedbylabel', *args)
 
-    async def getrpcinfo(self, *args):
-        return await self.call('getrpcinfo', *args)
+    async def getrpcinfo(self) -> dict:
+        """Returns details of the RPC server."""
+        return await self.call('getrpcinfo')
 
-    async def gettransaction(self, *args):
-        return await self.call('gettransaction', *args)
+    async def gettransaction(self, txid: str, include_watchonly: bool = False) -> dict:
+        """Get detailed information about in-wallet transaction <txid>"""
+        return await self.call('gettransaction', txid, include_watchonly)
 
-    async def gettxout(self, *args):
-        return await self.call('gettxout', *args)
+    async def gettxout(self, txid: str, n: int, include_mempool: bool = True):
+        """Returns details about an unspent transaction output."""
+        return await self.call('gettxout', txid, n, include_mempool)
 
-    async def gettxoutproof(self, *args):
-        return await self.call('gettxoutproof', *args)
+    async def gettxoutproof(self, txids: List[str], blockhash: str = None):
+        """
+        Returns a hex-encoded proof that "txid" was included in a block.
 
-    async def gettxoutsetinfo(self, *args):
-        return await self.call('gettxoutsetinfo', *args)
+        NOTE: By default this function only works sometimes. This is when there is an
+        unspent output in the utxo for this transaction. To make it always work,
+        you need to maintain a transaction index, using the -txindex command line option or
+        specify the block in which the transaction is included manually (by blockhash).
+        """
+        if blockhash is None:
+            return await self.call('gettxoutproof', txids)
+        else:
+            return await self.call('gettxoutproof', txids, blockhash)
 
-    async def getunconfirmedbalance(self, *args):
-        return await self.call('getunconfirmedbalance', *args)
+    async def gettxoutsetinfo(self) -> dict:
+        """
+        Returns statistics about the unspent transaction output set.
+        Note this call may take some time.
+        """
+        return await self.call('gettxoutsetinfo')
+
+    async def getunconfirmedbalance(self) -> float:
+        """Returns the server's total unconfirmed balance"""
+        return await self.call('getunconfirmedbalance')
 
     async def getwalletinfo(self, *args):
         return await self.call('getwalletinfo', *args)
 
-    async def help(self, *args):
-        return await self.call('help', *args)
+    async def help(self, command: str) -> str:
+        return await self.call('help', command)
 
     async def importaddress(self, *args):
         return await self.call('importaddress', *args)
@@ -283,8 +397,13 @@ class AsyncBitcoreDeamon(AsyncJsonRPC):
     async def logging(self, *args):
         return await self.call('logging', *args)
 
-    async def ping(self, *args):
-        return await self.call('ping', *args)
+    async def ping(self) -> None:
+        """
+        Requests that a ping be sent to all other nodes, to measure ping time.
+        Results provided in getpeerinfo, pingtime and pingwait fields are decimal seconds.
+        Ping command is handled in queue with all other commands, so it measures processing backlog, not just network ping.
+        """
+        return await self.call('ping')
 
     async def preciousblock(self, *args):
         return await self.call('preciousblock', *args)
@@ -358,8 +477,9 @@ class AsyncBitcoreDeamon(AsyncJsonRPC):
     async def unloadwallet(self, *args):
         return await self.call('unloadwallet', *args)
 
-    async def uptime(self, *args):
-        return await self.call('uptime', *args)
+    async def uptime(self) -> int:
+        """Returns the total uptime of the server."""
+        return await self.call('uptime')
 
     async def utxoupdatepsbt(self, *args):
         return await self.call('utxoupdatepsbt', *args)
