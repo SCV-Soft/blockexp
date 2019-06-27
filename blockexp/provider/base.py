@@ -57,6 +57,9 @@ class Provider:
     async def get_block(self, block_id: str = None) -> Block:
         raise NotImplementedError
 
+    async def get_full_block(self, block_id: str) -> Tuple[Block, List[Transaction]]:
+        raise NotImplementedError
+
     async def stream_transactions(self,
                                   block_height: int,
                                   block_hash: str,
