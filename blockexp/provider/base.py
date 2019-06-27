@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from enum import IntEnum
-from typing import Union, Any, TypeVar, Generic, List
+from enum import IntEnum, Enum
+from typing import Union, Any, TypeVar, Generic, List, Tuple
 
 from ..model import Block, Transaction, CoinListing, Authhead, TransactionId, AddressBalance, EstimateFee
 
@@ -21,6 +21,11 @@ class SteamingFindOptions(Generic[T]):
     limit: int = None
 
 
+class ProviderType(Enum):
+    UTXO = "utxo"
+    NONCE = "nonce"
+
+
 @dataclass(init=False)
 class Provider:
     chain: str
@@ -29,6 +34,10 @@ class Provider:
     def __init__(self, chain: str, network: str):
         self.chain = chain
         self.network = network
+
+    @property
+    def type(self) -> ProviderType:
+        raise NotImplementedError
 
     async def __aenter__(self):
         pass

@@ -6,7 +6,7 @@ from requests_async import Response
 
 from blockexp.model import Authhead, TransactionId, AddressBalance, Coin, EstimateFee
 from starlette_typed.marshmallow import build_schema, Schema
-from .base import Provider
+from .base import Provider, ProviderType
 from blockexp.provider import SteamingFindOptions
 from ..model import Block, Transaction, CoinListing
 from ..proxy.bitcore import AsyncBitcore
@@ -28,6 +28,10 @@ class BitcoreProvider(Provider):
     def __init__(self, chain: str, network: str):
         super().__init__(chain, network)
         self.api = AsyncBitcore(chain, network)
+
+    @property
+    def type(self) -> ProviderType:
+        return ProviderType.UTXO
 
     async def __aenter__(self):
         await self.api.__aenter__()
