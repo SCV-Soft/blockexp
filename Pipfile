@@ -4,6 +4,7 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+pylint = "*"
 
 [packages]
 web3 = "*"
@@ -20,6 +21,8 @@ requests-async = "*"
 motor = "==2.0.0"
 aioredis = "*"
 tqdm = "*"
+python-bitcoinlib = "*"
+databases = "*"
 
 [requires]
 python_version = "3.7"
