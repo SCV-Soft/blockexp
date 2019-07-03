@@ -2,7 +2,6 @@ from typing import Any
 
 from starlette.applications import Starlette
 
-from swagger.ui import create_swagger
 from .service import Service
 
 
@@ -50,7 +49,7 @@ def init_app(*, debug=False) -> Starlette:
     from .api import api
     app.mount('/api', api)
 
-    from .api import apispec
-    app.mount('/', create_swagger(apispec))
+    from .ext import swagger
+    app.register_extension(swagger)
 
     return app

@@ -13,11 +13,9 @@ class PlainTextOpenAPIResponse(OpenAPIResponse):
     media_type = PlainTextResponse.media_type
 
 
-def create_swagger(apispec: APISpec):
-    swagger = Router()
+def create_schema_handler(apispec: APISpec):
     schemas = TypedStarletteSchemaGenerator(apispec)
 
-    @swagger.route('/schema', include_in_schema=False)
     def schema(request: Request):
         app: Starlette = request.app
         if app.debug:
@@ -26,10 +24,17 @@ def create_swagger(apispec: APISpec):
         else:
             return schemas.OpenAPIResponse(request)
 
-    swagger.mount(
+    return schema
+
+
+def create_swagger(apispec: APISpec, *, router: Router = None):
+    handler = create_schema_handler(apispec)
+    router.add_route('/schema', handler, include_in_schema=False)
+
+    router.mount(
         path='/',
         app=StaticFiles(packages=[__package__], html=True),
         name='statics',
     )
 
-    return swagger
+    return router
