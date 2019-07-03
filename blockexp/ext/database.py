@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import random
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Union, List, cast, Optional
@@ -14,6 +15,7 @@ from motor.motor_asyncio import (
     AsyncIOMotorLatentCommandCursor,
     AsyncIOMotorChangeStream,
 )
+from pymongo.errors import BulkWriteError
 from pymongo.results import InsertOneResult, InsertManyResult, DeleteResult, UpdateResult
 from starlette.requests import Request
 
@@ -299,3 +301,21 @@ async def connect_database(request: Request) -> MongoDatabase:
     async with connect_database_for(app) as database:
         request.scope['database'] = database
         yield database
+
+
+@asynccontextmanager
+async def bulk_write_for(collection: MongoCollection, *, ordered: bool) -> List:
+    db_ops = []
+    yield db_ops
+
+    if db_ops:
+        try:
+            await collection.bulk_write(db_ops, ordered)
+        except BulkWriteError as e:
+            print('error', e)
+            for db_op in db_ops:
+                try:
+                    await collection.bulk_write([db_op])
+                except Exception:
+                    print('failure:', db_op)
+                    raise
