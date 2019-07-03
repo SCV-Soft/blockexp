@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum, Enum
-from typing import Union, Any, TypeVar, Generic, List, Tuple
+from typing import Union, Any, TypeVar, Generic, List
 
 from ..model import Block, Transaction, CoinListing, Authhead, TransactionId, AddressBalance, EstimateFee
 
@@ -59,14 +59,13 @@ class Provider:
 
     async def stream_blocks(self,
                             since_block: Union[str, int] = None,
+                            start_date: str = None,
+                            end_date: str = None,
                             date: str = None,
                             find_options: SteamingFindOptions[Block] = None) -> List[Block]:
         raise NotImplementedError
 
     async def get_block(self, block_id: Union[str, int]) -> Block:
-        raise NotImplementedError
-
-    async def get_full_block(self, block_id: str) -> Tuple[Block, List[Transaction]]:
         raise NotImplementedError
 
     async def stream_transactions(self,

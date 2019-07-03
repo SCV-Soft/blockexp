@@ -91,10 +91,14 @@ class BitcoreProvider(Provider):
 
     async def stream_blocks(self,
                             since_block: Union[str, int] = None,
+                            start_date: str = None,
+                            end_date: str = None,
                             date: str = None,
                             find_options: SteamingFindOptions[Block] = None) -> List[Block]:
         return await self._get(List[Block], f'block/', params={
             'sinceBlock': since_block,
+            'startDate': start_date,
+            'endDate': end_date,
             'date': date,
             'limit': find_options.limit,
             'since': find_options.since,
