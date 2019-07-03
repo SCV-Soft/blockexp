@@ -1,7 +1,10 @@
 from typing import Any, Tuple, Optional
 
 import requests_async as requests
+from h11 import RemoteProtocolError
 from requests.auth import HTTPBasicAuth
+from requests_async import Response
+from requests.exceptions import ConnectionError as RequestsConnectionError
 
 
 class JSONRPCException(Exception):
@@ -49,11 +52,22 @@ class AsyncJsonRPC:
         return await self.session.__aexit__(exc_type, exc_val, exc_tb)
 
     async def call(self, method, *params) -> Any:
-        response = await self.session.post(
-            self.url,
-            json=jsonrpc20_call(method, *params),
-            auth=self.auth,
-        )
+        response: Optional[Response] = None
+
+        for repeat in range(3):
+            try:
+                response = await self.session.post(
+                    self.url,
+                    json=jsonrpc20_call(method, *params),
+                    auth=self.auth,
+                )
+            except (RemoteProtocolError, RequestsConnectionError):
+                if repeat >= 2:
+                    raise
+
+                continue
+            else:
+                break
 
         result_id, result, error = jsonrpc20_result(response.json())
         if result_id != 0:
