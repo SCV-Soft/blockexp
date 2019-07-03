@@ -18,7 +18,7 @@ def build_api() -> Router:
     api.mount('/{chain}/{network}/fee', fee.api)
     api.mount('/{chain}/{network}/stats', stats.api)
     api.mount('/{chain}/{network}/tx', tx.api)
-    api.mount('/{chain}/{network}/wallet', wallet.api)
+    # api.mount('/{chain}/{network}/wallet', wallet.api)
     return api
 
 
