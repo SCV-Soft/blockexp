@@ -3,6 +3,7 @@ from typing import Any
 from starlette.applications import Starlette
 
 from swagger.ui import create_swagger
+from .service import Service
 
 
 class Application(Starlette):
@@ -10,6 +11,21 @@ class Application(Starlette):
         super().__init__(*args, **kwargs)
         self.extensions = {}
         self.config = {}
+        self.services = []
+
+        self.on_event("startup")(self.on_startup)
+        self.on_event("shutdown")(self.on_shutdown)
+
+    async def on_startup(self):
+        for service in self.services:
+            await service.on_startup()
+
+    async def on_shutdown(self):
+        for service in self.services:
+            await service.on_shutdown()
+
+    def register_service(self, service: Service):
+        self.services.append(service)
 
     def get_extension(self, name: str):
         return self.extensions[name]
