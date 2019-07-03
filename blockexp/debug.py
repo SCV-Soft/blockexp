@@ -15,6 +15,8 @@ __all__ = ["app", "main"]
 
 app: Starlette
 
+RELOAD = False
+
 
 def main():
     import blockexp
@@ -32,12 +34,15 @@ def main():
     while True:
         uvicorn.run(
             f"{__name__}:app",
-            host='127.0.0.1',
+            host='0.0.0.0',
             port=8000,
-            debug=True,
-            reload=True,
+            debug=True and RELOAD,
+            reload=RELOAD,
             reload_dirs=[directory],
         )
+
+        if not RELOAD:
+            break
 
         logger.error("FAILURE RELOAD")
 
