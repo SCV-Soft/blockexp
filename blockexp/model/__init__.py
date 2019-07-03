@@ -1,4 +1,4 @@
-from dataclasses import dataclass, is_dataclass
+from dataclasses import dataclass, is_dataclass, field
 from typing import List, Optional
 
 from starlette_typed.marshmallow import check_schema
@@ -6,7 +6,6 @@ from starlette_typed.marshmallow import check_schema
 
 @dataclass
 class Block:
-    _id: str
     chain: str
     network: str
     confirmations: Optional[int]
@@ -24,11 +23,11 @@ class Block:
     bits: int
     reward: int
     processed: Optional[bool] = None
+    _id: str = None
 
 
 @dataclass
 class Coin:
-    _id: str
     chain: str
     network: str
     mintTxid: str
@@ -36,11 +35,13 @@ class Coin:
     mintHeight: int
     coinbase: bool
     value: int
-    address: str
     script: str
-    spentTxid: str
-    spentHeight: int
-    confirmations: Optional[int]
+    address: str = None  # TODO: how to address
+    spentTxid: str = None
+    spentHeight: int = -1
+    confirmations: Optional[int] = 0
+    wallets: List[str] = field(default_factory=list)
+    _id: str = None
 
 
 @dataclass
@@ -59,7 +60,6 @@ class Authhead:
 
 @dataclass
 class Transaction:
-    _id: str
     txid: str
     chain: str
     network: str
@@ -75,6 +75,7 @@ class Transaction:
     outputCount: int
     value: int
     confirmations: Optional[int] = None
+    _id: str = None
 
 
 @dataclass
