@@ -274,7 +274,7 @@ class DatabasePool:
 
 def init_app(app: Application) -> DatabasePool:
     url = DatabaseURL(app.config.get('DATABASE_URL', 'mongodb:///default'))
-    return DatabasePool(url)
+    return DatabasePool(url, max_size=32)
 
 
 def get_pool(app: Application) -> DatabasePool:
