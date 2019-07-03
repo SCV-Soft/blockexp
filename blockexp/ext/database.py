@@ -280,17 +280,22 @@ def get_pool(app: Application) -> DatabasePool:
 
 
 @asynccontextmanager
-async def connect_database(request: Request) -> MongoDatabase:
-    app = request.scope['app']
+async def connect_database_for(app: Application) -> MongoDatabase:
     pool = get_pool(app)
     client = await pool.connect()
 
     raw_database = client.get_database(pool.url.database)
     database = MongoDatabase(raw_database)
 
-    request.scope['database'] = database
-
     try:
         yield database
     finally:
         await pool.release(client)
+
+
+@asynccontextmanager
+async def connect_database(request: Request) -> MongoDatabase:
+    app = request.scope['app']
+    async with connect_database_for(app) as database:
+        request.scope['database'] = database
+        yield database
