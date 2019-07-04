@@ -4,11 +4,11 @@ from typing import List
 from starlette.requests import Request
 from starlette.routing import Router
 
-from blockexp.provider import SteamingFindOptions, Direction
 from starlette_typed import typed_endpoint
 from . import ApiPath
 from ...model import Block
 from ...provider import Provider
+from ...provider.base import SteamingFindOptions, Direction
 
 api = Router()
 

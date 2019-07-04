@@ -12,8 +12,8 @@ from ..application import Application
 from ..ext.database import MongoCollection, bulk_write_for, connect_database_for
 from ..importer.base import Importer
 from ..model import Block
-from ..provider import BitcoinDaemonProvider
-from ..provider.bitcoind import BtcBlock, BtcTransaction, BtcVOut, BtcScriptPubKey, BtcVIn, BtcVInCoinbase
+from ..provider.bitcoind import BitcoinDaemonProvider, BtcBlock, BtcTransaction, BtcVOut, BtcScriptPubKey, BtcVIn, \
+    BtcVInCoinbase
 
 
 # https://learnmeabitcoin.com/glossary/script
