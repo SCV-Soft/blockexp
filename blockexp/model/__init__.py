@@ -1,6 +1,8 @@
 from dataclasses import dataclass, is_dataclass, field
 from typing import List, Optional, Type
 
+from datetime import datetime
+
 from starlette_typed.marshmallow import check_schema, Schema, build_schema
 
 SCHEMAS = {}
@@ -23,8 +25,8 @@ class Block:
     hash: str
     version: int
     merkleRoot: str
-    time: str  # Date
-    timeNormalized: str  # Date
+    time: datetime
+    timeNormalized: datetime
     nonce: int
     previousBlockHash: str
     nextBlockHash: str

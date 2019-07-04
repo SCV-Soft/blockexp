@@ -137,8 +137,8 @@ class BitcoinDaemonProvider(Provider):
             hash=block.hash,
             version=block.version,
             merkleRoot=block.merkleroot,
-            time=block_time.isoformat(),
-            timeNormalized=block_time.isoformat(),  # ?
+            time=block_time,
+            timeNormalized=block_time,  # ?
             nonce=block.nonce,
             previousBlockHash=block.previousblockhash,
             nextBlockHash=block.nextblockhash,
