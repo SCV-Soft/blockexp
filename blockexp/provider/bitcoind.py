@@ -1,11 +1,13 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Union, Any, List, Optional
 
 from pymongo import DESCENDING
+from pymongo.cursor import Cursor
 from requests.auth import HTTPBasicAuth
 
-from .base import Provider, ProviderType, SteamingFindOptions
+from blockexp.error import BlockNotFound, TransactionNotFound
+from .base import Provider, ProviderType, SteamingFindOptions, DailyTransactions, Direction
 from ..ext.database import MongoDatabase, MongoCollection
 from ..model import Block, Transaction, EstimateFee, TransactionId, CoinListing, Authhead, AddressBalance, Coin
 from ..proxy.bitcoind import AsyncBitcoinDeamon
@@ -288,12 +290,28 @@ class BitcoinMongoProvider(Provider):
         # TODO: cache tip for refresh confirm count
 
     def convert_raw_block(self, raw_block: Any, tip: Block = None) -> Block:
-        return Block(**raw_block, chain=self.chain, network=self.network)
+        block = Block(**raw_block, chain=self.chain, network=self.network)
+        if tip is not None:
+            block.confirmations = tip.height - block.height + 1
 
-    def convert_raw_transaction(self, raw_transaction: Any, raw_block: Any) -> Transaction:
-        return Transaction(**raw_transaction, chain=self.chain, network=self.network)
+        return block
+
+    def convert_raw_transaction(self, raw_transaction: Any, raw_block: Any = None, tip: Block = None) -> Transaction:
+        raw_transaction.pop('chain', None)
+        raw_transaction.pop('network', None)
+        raw_transaction.pop('wallets', None)
+
+        transaction = Transaction(**raw_transaction, chain=self.chain, network=self.network)
+        if tip is not None:
+            transaction.confirmations = tip.height - transaction.blockHeight + 1
+
+        return transaction
 
     def convert_raw_coin(self, raw_coin: dict) -> Coin:
+        wallets = raw_coin['wallets']
+        if wallets:
+            raw_coin.setdefault('address', wallets[0])
+
         return Coin(**raw_coin, chain=self.chain, network=self.network)
 
     @property
@@ -312,24 +330,56 @@ class BitcoinMongoProvider(Provider):
     def coin_collection(self) -> MongoCollection:
         return self.database[f'coins[{self._collection_key}]']
 
-    def cast_find_options(self, find_options: SteamingFindOptions) -> dict:
-        find_options.limit = 10
+    async def streaming(self,
+                        collection: MongoCollection,
+                        query: dict,
+                        find_options: SteamingFindOptions,
+                        *,
+                        model: Any = None) -> List[dict]:
+        if find_options.limit is None:
+            find_options.limit = 10
 
-        return {'limit': find_options.limit}
+        query = query.copy()
+
+        paging = find_options.paging
+        if paging is not None:
+            # TODO: vaild attribute for model
+            if find_options.since is not None:
+                if find_options.direction == Direction.ASCENDING:
+                    query[paging] = {'$gt': find_options.since}
+                elif find_options.direction == Direction.DESCENDING:
+                    query[paging] = {'$lt': find_options.since}
+
+        cursor = collection.find(query, limit=find_options.limit)
+
+        if find_options.sort is not None:
+            cursor = cursor.sort(find_options.sort)
+
+        return await cursor.to_list(None)
 
     async def stream_address_transactions(self,
                                           address: str,
                                           unspent: bool,
-                                          find_options: SteamingFindOptions) -> List[Any]:
-        raise NotImplementedError
+                                          find_options: SteamingFindOptions) -> List[Transaction]:
+        query = {'wallets': address}
+        if unspent is not None:
+            if unspent:
+                query['spentHeight'] = {'$gte': 0}
+            else:
+                query['spentHeight'] = {'$lt': 0}
+
+        tip = await self.get_local_tip()
+        raw_transactions = await self.streaming(self.tx_collection, query, find_options)
+        return [self.convert_raw_transaction(raw_transaction, tip=tip)
+                for raw_transaction in raw_transactions]
 
     async def stream_address_utxos(self, address: str, unspent: bool, find_options: SteamingFindOptions) -> List[Any]:
         query = {'wallets': address}
         if unspent:
-            query.update({'spentHeight': {'$lt': 0}})
+            query['spentHeight'] = {'$lt': 0}
 
-        raw_coins = self.coin_collection.find(query, **self.cast_find_options(find_options))
-        return [self.convert_raw_coin(raw_coin) async for raw_coin in raw_coins]
+        raw_coins = await self.streaming(self.coin_collection, query, find_options)
+        return [self.convert_raw_coin(raw_coin) for raw_coin in raw_coins]
 
     async def get_balance_for_address(self, address: str) -> AddressBalance:
         raw_coins = self.coin_collection.find({
@@ -343,7 +393,6 @@ class BitcoinMongoProvider(Provider):
         balance = 0
 
         async for raw_coin in raw_coins:
-            # TODO: satoshi or value?
             value = raw_coin['value']
 
             is_confirmed = raw_coin['mintHeight'] >= 0  # always true
@@ -361,16 +410,15 @@ class BitcoinMongoProvider(Provider):
                             start_date: str = None,
                             end_date: str = None,
                             date: str = None,
-                            find_options: SteamingFindOptions[Block] = None) -> List[Block]:
-        tip = await self.get_local_tip()
+                            find_options: SteamingFindOptions = None) -> List[Block]:
         query = {}
 
-        if isinstance(since_block, str):
-            query.update({'hash': since_block})
+        if since_block is None:
+            pass
+        elif isinstance(since_block, str):
+            query['hash'] = since_block
         elif isinstance(since_block, int):
-            query.update({'height': {'$gt': since_block}})
-        else:
-            raise TypeError
+            query['height'] = {'$gt': since_block}
 
         if start_date:
             start_date = datetime.fromisoformat(start_date)
@@ -388,43 +436,55 @@ class BitcoinMongoProvider(Provider):
                 '$lt': next_date.isoformat(),
             })
 
-        raw_blocks = self.block_collection.find(query, **self.cast_find_options(find_options))
-        return [self.convert_raw_block(raw_block, tip=tip) async for raw_block in raw_blocks]
+        find_options.sort = [('height', DESCENDING)]
+
+        tip = await self.get_local_tip()
+        raw_blocks = await self.streaming(self.block_collection, query, find_options)
+        return [self.convert_raw_block(raw_block, tip=tip)
+                for raw_block in raw_blocks]
 
     async def get_block(self, block_id: Union[str, int]) -> Block:
         raw_block: Optional[dict] = await self.get_raw_block(block_id)
         if raw_block is None:
-            raise KeyError(block_id)
+            raise BlockNotFound(block_id)
 
         return self.convert_raw_block(raw_block)
 
     async def get_raw_block(self, block_id: Union[str, int]) -> Optional[dict]:
         if isinstance(block_id, int):
-            block_height = block_id
-            block: Optional[dict] = await self.block_collection.find_one({'height': block_height})
-            return block
+            return await self.block_collection.find_one({'height': block_id})
         elif isinstance(block_id, str):
-            block_hash = block_id
-            block: Optional[dict] = await self.block_collection.find_one({'hash': block_hash})
-            return block
+            return await self.block_collection.find_one({'hash': block_id})
         else:
             raise TypeError
 
     async def stream_transactions(self,
-                                  block_height: int,
-                                  block_hash: str,
+                                  block_height: Optional[int] = None,
+                                  block_hash: Optional[str] = None,
+                                  *,
                                   find_options: SteamingFindOptions) -> List[Transaction]:
-        raise NotImplementedError
+        query = {}
+
+        if block_height is not None:
+            query['blockHeight'] = block_height
+
+        if block_hash is not None:
+            query['blockHash'] = block_hash
+
+        tip = await self.get_local_tip()
+        raw_transactions = await self.streaming(self.tx_collection, query, find_options)
+        return [self.convert_raw_transaction(raw_transaction, tip=tip)
+                for raw_transaction in raw_transactions]
 
     async def get_transaction(self, tx_id: str) -> Transaction:
         raw_tx: Optional[dict] = await self.tx_collection.find_one({'txid': tx_id})
         if raw_tx is None:
-            raise KeyError(tx_id)
+            raise TransactionNotFound(tx_id)
 
         return self.convert_raw_transaction(raw_tx, None)
 
     async def get_authhead(self, tx_id: str) -> Authhead:
-        raise NotImplementedError
+        raise NotImplementedError("NOT IMPLEMENTED YET")
 
     async def create_wallet(self, name: str, pub_key: str, path: str, single_address: bool) -> Any:
         raise NotImplementedError
@@ -465,16 +525,39 @@ class BitcoinMongoProvider(Provider):
             outputs=[self.convert_raw_coin(raw_coin) async for raw_coin in outputs],
         )
 
-    async def get_daily_transactions(self) -> Any:
-        raise NotImplementedError
+    async def get_daily_transactions(self) -> DailyTransactions:
+        results = self.block_collection.aggregate([
+            {'$group': {
+                '_id': {
+                    '$dateToString': {
+                        'format': '%Y-%m-%d',
+                        'date': '$timeNormalized',
+                    }
+                },
+                'transactionCount': {
+                    '$sum': '$transactionCount',
+                }
+            }},
+            {'$project': {
+                '_id': 0,
+                'date': '$_id',
+                'transactionCount': '$transactionCount',
+            }},
+            {'$sort': {
+                'date': 1,
+            }},
+        ])
+
+        return DailyTransactions(
+            results=[result async for result in results],
+            chain=self.chain,
+            network=self.network,
+        )
 
     async def get_local_tip(self) -> Block:
-        def sort(**data):
-            return list(data.items())
-
-        raw_block: Optional[dict] = await self.block_collection.find_one(sort=sort(height=DESCENDING))
+        raw_block: Optional[dict] = await self.block_collection.find_one(sort=[('height', DESCENDING)])
         if raw_block is None:
-            raise KeyError(None)
+            raise BlockNotFound(None)
 
         return self.convert_raw_block(raw_block)
 
