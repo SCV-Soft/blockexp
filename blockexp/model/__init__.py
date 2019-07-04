@@ -87,6 +87,7 @@ class Transaction:
     outputCount: int
     value: int
     confirmations: Optional[int] = None
+    wallets: List[str] = None
     _id: str = None
 
 

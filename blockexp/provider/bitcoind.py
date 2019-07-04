@@ -64,6 +64,7 @@ class BtcTransaction:
     confirmations: int = None
     time: int = None
     blocktime: int = None
+    wallets: List[str] = field(default_factory=list)
 
     def is_coinbase(self) -> bool:
         return isinstance(self.vin[0], BtcVInCoinbase) if self.vin else False
@@ -166,6 +167,7 @@ class BitcoinDaemonProvider(Provider):
             outputCount=len(transaction.vout),
             value=sum(item.value for item in transaction.vout),
             confirmations=transaction.confirmations,
+            wallets=transaction.wallets,
         )
 
     async def _get_block(self, block_id: Union[str, int], *, verbosity: int) -> BtcBlock:
