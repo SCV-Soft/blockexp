@@ -320,15 +320,15 @@ class BitcoinMongoProvider(Provider):
 
     @property
     def block_collection(self) -> MongoCollection:
-        return self.database[f'blocks[{self._collection_key}]']
+        return self.database[f'{self._collection_key}:blocks']
 
     @property
     def tx_collection(self) -> MongoCollection:
-        return self.database[f'transactions[{self._collection_key}]']
+        return self.database[f'{self._collection_key}:transactions']
 
     @property
     def coin_collection(self) -> MongoCollection:
-        return self.database[f'coins[{self._collection_key}]']
+        return self.database[f'{self._collection_key}:coins']
 
     async def streaming(self,
                         collection: MongoCollection,
