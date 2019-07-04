@@ -8,7 +8,7 @@ from swagger.ui import create_swagger
 from ..api import apispec
 from ..application import Application
 
-REPLACE_PATH = True
+REPLACE_PATH = False
 
 
 def fill_default_value(content: dict, chain: str, network: str):
