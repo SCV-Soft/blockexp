@@ -12,6 +12,7 @@ class ApiPath:
 def build_api() -> Router:
     from . import address, block, fee, stats, tx, wallet, status
 
+    # noinspection PyShadowingNames
     api = Router()
     api.mount('/{chain}/{network}/address', address.api)
     api.mount('/{chain}/{network}/block', block.api)

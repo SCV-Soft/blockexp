@@ -7,9 +7,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field, is_dataclass
 from inspect import Parameter
 from traceback import TracebackException
-from typing import Any, Tuple
-from typing import Optional, Callable, Type, Dict, TypeVar, Set, List, get_type_hints
-from typing import cast
+from typing import Any, Tuple, Optional, Callable, Type, Dict, TypeVar, Set, List, get_type_hints, cast
 
 import typing_inspect
 from requests import Request
