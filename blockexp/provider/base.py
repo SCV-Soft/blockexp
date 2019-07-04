@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum, Enum
-from typing import Union, Any, TypeVar, Generic, List
+from typing import Union, Any, TypeVar, List
 
 from ..model import Block, Transaction, CoinListing, Authhead, TransactionId, AddressBalance, EstimateFee
 
@@ -25,7 +25,7 @@ class SteamingFindOptions:
 class DailyTransactions:
     chain: str
     network: str
-    results: List[Block]
+    results: List[Any]
 
 
 class ProviderType(Enum):
