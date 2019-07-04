@@ -7,9 +7,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field, is_dataclass
 from inspect import Parameter
 from traceback import TracebackException
-from typing import Any, Tuple
-from typing import Optional, Callable, Type, Dict, TypeVar, Set, List, get_type_hints
-from typing import cast
+from typing import Any, Tuple, Optional, Callable, Type, Dict, TypeVar, Set, List, get_type_hints, cast
 
 import typing_inspect
 from requests import Request
@@ -17,6 +15,7 @@ from starlette.requests import Request
 from starlette.responses import Response, JSONResponse, PlainTextResponse
 
 from .marshmallow import build_schema, Schema
+from .response import HTTPException
 
 ExtraHandler = Callable[[Request], Any]
 
@@ -242,6 +241,9 @@ def build_response(result: Any, description: Description) -> Response:
 
 
 def build_error(request: Request, exc: Exception) -> Response:
+    if isinstance(exc, HTTPException):
+        return Response(status_code=exc.code)
+
     tbe = TracebackException.from_exception(exc)
 
     return PlainTextResponse(
