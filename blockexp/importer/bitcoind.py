@@ -31,6 +31,7 @@ def asrow(obj: Any) -> dict:
     data.pop('_id')
     data.pop('chain')
     data.pop('network')
+    return data
 
 
 class BtcTxOutputType(str, Enum):
