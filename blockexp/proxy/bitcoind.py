@@ -128,7 +128,7 @@ class AsyncBitcoinDeamon(AsyncJsonRPC):
         """
         return await self.call('getbestblockhash')
 
-    async def getblock(self, blockhash: str, verbosity: int = 1) -> Union[str, dict]:
+    async def getblock(self, blockhash: str, verbosity: Union[int, bool] = True) -> Union[str, dict]:
         """
         If verbosity is 0, returns a string that is serialized, hex-encoded data for block 'hash'.
         If verbosity is 1, returns an Object with information about block <hash>.
