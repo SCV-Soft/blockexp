@@ -15,7 +15,9 @@ api = Router()
 
 @dataclass
 class StreamBlockApiQuery:
-    sinceBlock: str
+    sinceBlock: str = None
+    startDate: str = None
+    endDate: str = None
     date: str = None
     limit: int = None
     since: int = None
@@ -27,7 +29,9 @@ class StreamBlockApiQuery:
 @typed_endpoint(tags=["bitcore"])
 async def stream_blocks(request: Request, path: ApiPath, query: StreamBlockApiQuery, provider: Provider) -> List[Block]:
     return await provider.stream_blocks(
-        since_block=query.sinceBlock,
+        since_block=int(query.sinceBlock) if query.sinceBlock and query.sinceBlock.isdecimal() else query.sinceBlock,
+        start_date=query.startDate,
+        end_date=query.endDate,
         date=query.date,
         find_options=SteamingFindOptions(
             limit=query.limit,
