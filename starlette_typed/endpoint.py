@@ -13,6 +13,7 @@ from typing import cast
 
 import typing_inspect
 from requests import Request
+from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse, PlainTextResponse
 
@@ -192,6 +193,8 @@ def build_new_view_func(view_func: Callable, description: Description):
                     await ctx.__aexit__(*exc_info)
 
             return build_response(response, description)
+        except HTTPException:
+            raise
         except Exception as exc:
             return build_error(request, exc)
 
