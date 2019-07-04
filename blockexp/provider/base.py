@@ -21,6 +21,13 @@ class SteamingFindOptions(Generic[T]):
     limit: int = None
 
 
+@dataclass
+class DailyTransactions:
+    chain: str
+    network: str
+    results: List[Block]
+
+
 class ProviderType(Enum):
     UTXO = "utxo"
     NONCE = "nonce"
@@ -113,7 +120,7 @@ class Provider:
     async def get_coins_for_tx(self, tx_id: str) -> CoinListing:
         raise NotImplementedError
 
-    async def get_daily_transactions(self) -> Any:
+    async def get_daily_transactions(self) -> DailyTransactions:
         raise NotImplementedError
 
     async def get_local_tip(self) -> Block:
