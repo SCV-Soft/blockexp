@@ -147,10 +147,7 @@ class BitcoinDaemonImporter(Importer):
         return Block(**block, chain=self.chain, network=self.network)
 
     async def get_db_tip(self) -> Optional[Block]:
-        def sort(**data):
-            return list(data.items())
-
-        block: Optional[dict] = await self.block_collection.find_one(sort=sort(height=DESCENDING))
+        block: Optional[dict] = await self.block_collection.find_one(sort=[('height', DESCENDING)])
         if block is None:
             return None
 
