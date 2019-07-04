@@ -222,7 +222,12 @@ class BitcoinDaemonImporter(Importer):
                 upsert=True,
             ))
 
-            prev_raw_block: BtcBlock = await self.provider.get_raw_block(block.height - 1) if block.height > 0 else None
+            prev_raw_block: BtcBlock = (
+                await self.provider.get_raw_block(block.height - 1)
+                if block.height > 0
+                else None
+            )
+
             if prev_raw_block is not None:
                 db_ops.append(UpdateOne(
                     filter={
