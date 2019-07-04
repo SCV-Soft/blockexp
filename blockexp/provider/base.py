@@ -13,8 +13,8 @@ class Direction(IntEnum):
 
 
 @dataclass
-class SteamingFindOptions(Generic[T]):
-    paging: T = None
+class SteamingFindOptions:
+    paging: str = None
     since: int = None
     sort: Any = None
     direction: Direction = None
@@ -55,7 +55,7 @@ class Provider:
     async def stream_address_transactions(self,
                                           address: str,
                                           unspent: bool,
-                                          find_options: SteamingFindOptions) -> List[Any]:
+                                          find_options: SteamingFindOptions) -> List[Transaction]:
         raise NotImplementedError
 
     async def stream_address_utxos(self, address: str, unspent: bool, find_options: SteamingFindOptions) -> List[Any]:
@@ -69,7 +69,7 @@ class Provider:
                             start_date: str = None,
                             end_date: str = None,
                             date: str = None,
-                            find_options: SteamingFindOptions[Block] = None) -> List[Block]:
+                            find_options: SteamingFindOptions = None) -> List[Block]:
         raise NotImplementedError
 
     async def get_block(self, block_id: Union[str, int]) -> Block:

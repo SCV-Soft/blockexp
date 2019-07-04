@@ -18,8 +18,8 @@ class StreamBlockApiQuery:
     sinceBlock: str
     date: str = None
     limit: int = None
-    direction: Direction = None
     since: int = None
+    direction: int = None
     paging: str = None
 
 
@@ -32,7 +32,7 @@ async def stream_blocks(request: Request, path: ApiPath, query: StreamBlockApiQu
         find_options=SteamingFindOptions(
             limit=query.limit,
             since=query.since,
-            direction=query.direction,
+            direction=Direction(query.direction) if query.direction is not None else None,
             paging=query.paging,
         )
     )
