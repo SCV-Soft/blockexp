@@ -15,7 +15,7 @@ class Direction(IntEnum):
 @dataclass
 class SteamingFindOptions(Generic[T]):
     paging: T = None
-    since: str = None
+    since: int = None
     sort: Any = None
     direction: Direction = None
     limit: int = None

@@ -18,8 +18,8 @@ class StreamBlockApiQuery:
     sinceBlock: str
     date: str = None
     limit: int = None
-    since: str = None
     direction: Direction = None
+    since: int = None
     paging: str = None
 
 

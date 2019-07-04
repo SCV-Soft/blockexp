@@ -21,7 +21,7 @@ class AddressApiPath(ApiPath):
 @dataclass
 class AddressApiQuery:
     unspent: bool = None
-    since: str = None
+    since: int = None
     limit: int = None
 
 
