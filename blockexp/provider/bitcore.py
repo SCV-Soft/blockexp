@@ -8,7 +8,7 @@ from starlette.exceptions import HTTPException
 from .base import Provider, ProviderType
 from ..model import get_schema, Block, Transaction, CoinListing, Authhead, TransactionId, AddressBalance, Coin, \
     EstimateFee
-from ..provider import SteamingFindOptions
+from ..provider.base import SteamingFindOptions
 from ..proxy.bitcore import AsyncBitcore
 
 T = TypeVar('T')
@@ -91,7 +91,7 @@ class BitcoreProvider(Provider):
                             start_date: str = None,
                             end_date: str = None,
                             date: str = None,
-                            find_options: SteamingFindOptions[Block] = None) -> List[Block]:
+                            find_options: SteamingFindOptions = None) -> List[Block]:
         return await self._get(List[Block], f'block/', params={
             'sinceBlock': since_block,
             'startDate': start_date,
