@@ -46,6 +46,9 @@ def init_app(*, debug=False) -> Starlette:
     from .ext import database
     app.register_extension(database)
 
+    from .ext import blockchain
+    app.register_extension(blockchain)
+
     from .api import api
     app.mount('/api', api)
 
