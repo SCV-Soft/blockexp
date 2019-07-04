@@ -60,7 +60,7 @@ class BitcoinDaemonImporter(Importer):
     def coin_collection(self) -> MongoCollection:
         return self.database[f'coins[{self._collection_key}]']
 
-    async def loop(self):
+    async def run(self):
         print('begin work')
         while True:
             try:

@@ -9,3 +9,6 @@ class Importer:
     def __init__(self, chain: str, network: str):
         self.chain = chain
         self.network = network
+
+    async def run(self):
+        raise NotImplementedError
