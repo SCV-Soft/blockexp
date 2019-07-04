@@ -237,12 +237,6 @@ if TYPE_CHECKING:
     MongoCursor = Union[MongoCollection, AgnosticCursor]
 
 
-@register_handler
-@asynccontextmanager
-async def db(request: Request) -> MongoDatabase:
-    async with connect_database(request) as database:
-        async with database:
-            yield database
 
 
 class DatabasePool:
