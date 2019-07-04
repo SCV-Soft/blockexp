@@ -43,9 +43,6 @@ def init_app(*, debug=False) -> Starlette:
         if not key.startswith('_')
     })
 
-    from .importer.bitcoind import BitcoinDaemonService
-    app.register_service(BitcoinDaemonService(app))
-
     from .ext import database
     app.register_extension(database)
 
