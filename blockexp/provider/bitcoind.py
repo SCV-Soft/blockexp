@@ -1,32 +1,15 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Union, Type, TypeVar, cast, Any, List, Optional
+from typing import Union, Any, List, Optional
 
-import typing_inspect
 from pymongo import DESCENDING
 from requests.auth import HTTPBasicAuth
-from requests_async import Response
 
-from starlette_typed.marshmallow import build_schema, Schema
 from .base import Provider, ProviderType, SteamingFindOptions
 from ..ext.database import MongoDatabase, MongoCollection
 from ..model import Block, Transaction, EstimateFee, TransactionId, CoinListing, Authhead, AddressBalance, Coin
 from ..proxy.bitcoind import AsyncBitcoreDeamon
 
-T = TypeVar('T')
-
-SCHEMAS = {}
-
-
-def get_schema(cls: Type, *, many: bool) -> Schema:
-    schema = SCHEMAS.get((cls, many))
-    if schema is None:
-        schema = SCHEMAS[(cls, many)] = build_schema(cls, many=many)
-
-    return schema
-
-
-# TODO: valid dataclass?
 
 @dataclass
 class BtcVInCoinbase:
@@ -140,26 +123,6 @@ class BitcoinDaemonProvider(Provider):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         return await self.rpc.__aexit__(exc_type, exc_val, exc_tb)
-
-    async def _call(self, cls: Type[T], method: str, *params) -> T:
-        res = await self.rpc.call(method, *params)
-        res.raise_for_status()
-        return await self._load(cls, res)
-
-    @staticmethod
-    async def _load(cls: Type[T], res: Response) -> T:
-        if cls == Any:
-            return res.json()
-        else:
-            if typing_inspect.get_origin(cls) == list:
-                cls, = typing_inspect.get_args(cls)
-                many = True
-            else:
-                many = False
-
-            schema = get_schema(cls, many=many)
-            obj = schema.load(res.json())
-            return cast(T, obj)
 
     def _cast_block(self, block: BtcBlock) -> Block:
         block_time = datetime.utcfromtimestamp(block.time)
