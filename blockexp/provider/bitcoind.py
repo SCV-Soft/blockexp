@@ -8,7 +8,7 @@ from requests.auth import HTTPBasicAuth
 from .base import Provider, ProviderType, SteamingFindOptions
 from ..ext.database import MongoDatabase, MongoCollection
 from ..model import Block, Transaction, EstimateFee, TransactionId, CoinListing, Authhead, AddressBalance, Coin
-from ..proxy.bitcoind import AsyncBitcoreDeamon
+from ..proxy.bitcoind import AsyncBitcoinDeamon
 from ..proxy.jsonrpc import JSONRPCError
 
 
@@ -112,7 +112,7 @@ class BtcBlock:
 class BitcoinDaemonProvider(Provider):
     def __init__(self, chain: str, network: str, url: str, auth: HTTPBasicAuth):
         super().__init__(chain, network)
-        self.rpc = AsyncBitcoreDeamon(url, auth=auth)
+        self.rpc = AsyncBitcoinDeamon(url, auth=auth)
         self.is_legacy_getblock = None
 
     @property

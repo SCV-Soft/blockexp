@@ -6,7 +6,7 @@ from .jsonrpc import AsyncJsonRPC
 # https://github.com/bitcoin/bitcoin/blob/master/test/functional/test_framework/authproxy.py
 
 # noinspection SpellCheckingInspection
-class AsyncBitcoreDeamon(AsyncJsonRPC):
+class AsyncBitcoinDeamon(AsyncJsonRPC):
     async def abandontransaction(self, *args):
         return await self.call('abandontransaction', *args)
 
