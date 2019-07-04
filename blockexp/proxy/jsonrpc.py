@@ -18,6 +18,9 @@ class JSONRPCError(JSONRPCException):
         self.message = message
         self.data = data
 
+    def __str__(self):
+        return f'{self.message} (code={self.code!r})'
+
 
 def jsonrpc20_call(method: str, *params, id: int = 0) -> dict:
     return {"jsonrpc": "2.0", "method": method, "params": params, "id": id}
