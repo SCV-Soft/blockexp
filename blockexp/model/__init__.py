@@ -1,7 +1,17 @@
 from dataclasses import dataclass, is_dataclass, field
-from typing import List, Optional
+from typing import List, Optional, Type
 
-from starlette_typed.marshmallow import check_schema
+from starlette_typed.marshmallow import check_schema, Schema, build_schema
+
+SCHEMAS = {}
+
+
+def get_schema(cls: Type, *, many: bool) -> Schema:
+    schema = SCHEMAS.get((cls, many))
+    if schema is None:
+        schema = SCHEMAS[(cls, many)] = build_schema(cls, many=many)
+
+    return schema
 
 
 @dataclass

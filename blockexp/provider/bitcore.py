@@ -13,16 +13,6 @@ from ..proxy.bitcore import AsyncBitcore
 
 T = TypeVar('T')
 
-SCHEMAS = {}
-
-
-def get_schema(cls: Type, *, many: bool) -> Schema:
-    schema = SCHEMAS.get((cls, many))
-    if schema is None:
-        schema = SCHEMAS[(cls, many)] = build_schema(cls, many=many)
-
-    return schema
-
 
 class BitcoreProvider(Provider):
     def __init__(self, chain: str, network: str):
@@ -43,15 +33,15 @@ class BitcoreProvider(Provider):
     async def _get(self, cls: Type[T], url, **kwargs) -> T:
         res = await self.api.get(url, **kwargs)
         res.raise_for_status()
-        return await self._load(cls, res)
+        return self._load(cls, res)
 
     async def _post(self, cls: Type[T], url, **kwargs) -> T:
         res = await self.api.post(url, **kwargs)
         res.raise_for_status()
-        return await self._load(cls, res)
+        return self._load(cls, res)
 
     @staticmethod
-    async def _load(cls: Type[T], res: Response) -> T:
+    def _load(cls: Type[T], res: Response) -> T:
         if cls == Any:
             return res.json()
         else:
