@@ -3,7 +3,7 @@ import traceback
 from collections import defaultdict
 from dataclasses import asdict
 from enum import Enum
-from typing import Union, List, Optional
+from typing import Union, List, Optional, Any
 
 from pymongo import UpdateOne, DESCENDING
 from tqdm import tqdm
@@ -24,6 +24,13 @@ from ..provider.bitcoind import BitcoinDaemonProvider, BtcBlock, BtcTransaction,
 
 def value2amount(value: float) -> int:
     return round(value * 1e8)
+
+
+def asrow(obj: Any) -> dict:
+    data = asdict(obj)
+    data.pop('_id')
+    data.pop('chain')
+    data.pop('network')
 
 
 class BtcTxOutputType(str, Enum):
@@ -205,17 +212,12 @@ class BitcoinDaemonImporter(Importer):
         block: Block = self.provider.convert_raw_block(raw_block)
 
         async with bulk_write_for(self.block_collection, ordered=True) as db_ops:
-            converted_block = asdict(block)
-            converted_block.pop('_id')
-            converted_block.pop('chain')
-            converted_block.pop('network')
-
             db_ops.append(UpdateOne(
                 filter={
                     'hash': block.hash,
                 },
                 update={
-                    '$set': converted_block,
+                    '$set': asrow(block),
                 },
                 upsert=True,
             ))
@@ -237,15 +239,13 @@ class BitcoinDaemonImporter(Importer):
         async with bulk_write_for(self.tx_collection, ordered=False) as db_ops:
             for raw_tx in txs:
                 tx = self.provider.convert_raw_transaction(raw_tx, raw_block)
-                converted_tx = asdict(tx)
-                converted_tx.pop('_id')
 
                 db_ops.append(UpdateOne(
                     filter={
                         'txid': tx.txid,
                     },
                     update={
-                        '$set': converted_tx,
+                        '$set': asrow(tx),
                     },
                     upsert=True,
                 ))
