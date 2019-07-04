@@ -1,7 +1,9 @@
 from typing import Union, List, Any, cast, Type, TypeVar
 
 import typing_inspect
+from requests import HTTPError
 from requests_async import Response
+from starlette.exceptions import HTTPException
 
 from .base import Provider, ProviderType
 from ..model import get_schema, Block, Transaction, CoinListing, Authhead, TransactionId, AddressBalance, Coin, \
@@ -28,14 +30,21 @@ class BitcoreProvider(Provider):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         return await self.api.__aexit__(exc_type, exc_val, exc_tb)
 
+    @staticmethod
+    def _raise_for_status(response: Response):
+        try:
+            response.raise_for_status()
+        except HTTPError as e:  # type: HTTPError
+            raise HTTPException(response.status_code)  # type: HTTPException
+
     async def _get(self, cls: Type[T], url, **kwargs) -> T:
         res = await self.api.get(url, **kwargs)
-        res.raise_for_status()
+        self._raise_for_status(res)
         return self._load(cls, res)
 
     async def _post(self, cls: Type[T], url, **kwargs) -> T:
         res = await self.api.post(url, **kwargs)
-        res.raise_for_status()
+        self._raise_for_status(res)
         return self._load(cls, res)
 
     @staticmethod
