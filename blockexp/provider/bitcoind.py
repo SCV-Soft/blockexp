@@ -9,6 +9,7 @@ from .base import Provider, ProviderType, SteamingFindOptions
 from ..ext.database import MongoDatabase, MongoCollection
 from ..model import Block, Transaction, EstimateFee, TransactionId, CoinListing, Authhead, AddressBalance, Coin
 from ..proxy.bitcoind import AsyncBitcoreDeamon
+from ..proxy.jsonrpc import JSONRPCError
 
 
 @dataclass
@@ -112,6 +113,7 @@ class BitcoinDaemonProvider(Provider):
     def __init__(self, chain: str, network: str, url: str, auth: HTTPBasicAuth):
         super().__init__(chain, network)
         self.rpc = AsyncBitcoreDeamon(url, auth=auth)
+        self.is_legacy_getblock = None
 
     @property
     def type(self) -> ProviderType:
@@ -172,9 +174,59 @@ class BitcoinDaemonProvider(Provider):
         else:
             block_hash = block_id
 
-        block = await self.rpc.getblock(block_hash, verbosity=verbosity)
-        assert isinstance(block, dict)
+        if self.is_legacy_getblock is None:
+            test_hash = await self.rpc.getbestblockhash()
 
+            try:
+                await self.rpc.getblock(test_hash, True)
+            except JSONRPCError:
+                # TODO: failure test function
+                raise
+            else:
+                try:
+                    await self.rpc.getblock(test_hash, verbosity)
+                except JSONRPCError as e:
+                    if e.code == -1:
+                        self.is_legacy_getblock = True
+                else:
+                    self.is_legacy_getblock = False
+
+        if self.is_legacy_getblock:
+            if verbosity == 0:
+                block = await self.rpc.getblock(block_hash, verbosity=False)
+            elif verbosity == 1:
+                block = await self.rpc.getblock(block_hash, verbosity=True)
+            elif verbosity == 2:
+                block = await self.rpc.getblock(block_hash, verbosity=True)
+
+                txs = []
+                for txid in block['tx']:
+                    try:
+                        tx = await self.rpc.getrawtransaction(txid, verbose=True)
+                        tx = self._convert_raw_transaction(tx)
+                        txs.append(tx)
+                    except JSONRPCError as e:
+                        if e.code == -5:
+                            # TODO: ?
+                            print('txid', txid, 'not found')
+                        else:
+                            raise
+
+                block['tx'] = txs
+            else:
+                raise ValueError
+        else:
+            block = await self.rpc.getblock(block_hash, verbosity=verbosity)
+            if block['tx'] and isinstance(block['tx'][0], dict):
+                block['tx'] = [self._convert_raw_block(tx) for tx in block['tx']]
+
+        assert isinstance(block, dict)
+        return self._convert_raw_block(block)
+
+    def _convert_raw_transaction(self, transaction: dict) -> BtcTransaction:
+        return BtcTransaction(**transaction)
+
+    def _convert_raw_block(self, block: dict) -> BtcBlock:
         return BtcBlock(**block)
 
     async def get_block(self, block_id: Union[str, int]) -> Block:
