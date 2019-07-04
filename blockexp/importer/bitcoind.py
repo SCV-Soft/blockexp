@@ -242,7 +242,6 @@ class BitcoinDaemonImporter(Importer):
                 tx = self.provider.convert_raw_transaction(raw_tx, raw_block)
                 converted_tx = asdict(tx)
                 converted_tx.pop('_id')
-                converted_tx['wallets'] = []
 
                 db_ops.append(UpdateOne(
                     filter={
@@ -263,6 +262,11 @@ class BitcoinDaemonImporter(Importer):
             for idx, vout in enumerate(tx.vout):  # type: int, BtcVOut
                 spk: BtcScriptPubKey = vout.scriptPubKey
                 amount = value2amount(vout.value)
+
+                if vout.scriptPubKey.addresses:
+                    for address in vout.scriptPubKey.addresses:
+                        if address not in tx.wallets:
+                            tx.wallets.append(address)
 
                 mint_ops.append({
                     'mintTxid': tx.hash,
