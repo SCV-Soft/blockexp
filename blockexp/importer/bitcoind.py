@@ -3,11 +3,9 @@ import traceback
 from collections import defaultdict
 from dataclasses import asdict
 from enum import Enum
-from typing import Union, List, Tuple, Optional
-from urllib.parse import urlparse, ParseResult
+from typing import Union, List, Optional
 
 from pymongo import UpdateOne, DESCENDING
-from requests.auth import HTTPBasicAuth
 from tqdm import tqdm
 
 from ..application import Application
@@ -16,7 +14,6 @@ from ..importer.base import Importer
 from ..model import Block
 from ..provider import BitcoinDaemonProvider
 from ..provider.bitcoind import BtcBlock, BtcTransaction, BtcVOut, BtcScriptPubKey, BtcVIn, BtcVInCoinbase
-from ..service import Service
 
 
 # https://learnmeabitcoin.com/glossary/script
@@ -39,45 +36,6 @@ class BtcTxOutputType(str, Enum):
     witness_v0_keyhash = "witness_v0_keyhash"
     witness_v0_scripthash = "witness_v0_scripthash"
     witness_unknown = "witness_unknown"
-
-
-def parse_url(url: str) -> Tuple[str, Optional[HTTPBasicAuth]]:
-    pr: ParseResult = urlparse(url)
-    if pr.username or pr.password:
-        assert pr.username and pr.password
-        auth = HTTPBasicAuth(pr.username, pr.password)
-        url = url.replace(f'{pr.username}:{pr.password}@', '')
-    else:
-        auth = None
-
-    return url, auth
-
-
-class BitcoinDaemonService(Service):
-    def __init__(self, app: Application):
-        self.app = app
-        self.importers = []
-        self.tasks = []
-
-    async def on_startup(self):
-        chain = "BTC"
-        for network, url in self.app.config["RPC"][chain].items():
-            url, auth = parse_url(url)
-            provider = BitcoinDaemonProvider(chain, network, url, auth=auth)
-            importer = BitcoinDaemonImporter(chain, network, provider, self.app)
-            task: asyncio.Future = asyncio.ensure_future(importer.loop())
-            self.importers.append(importer)
-            self.tasks.append(task)
-
-    async def on_shutdown(self):
-        for task in self.tasks:
-            task.cancel()
-
-        for task in self.tasks:
-            try:
-                await task
-            except asyncio.CancelledError:
-                pass
 
 
 class BitcoinDaemonImporter(Importer):
