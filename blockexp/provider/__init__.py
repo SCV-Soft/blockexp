@@ -1,13 +1,13 @@
 from contextlib import asynccontextmanager
 
-from requests.auth import HTTPBasicAuth
 from starlette.requests import Request
 
 from starlette_typed.endpoint import register_handler
 from .base import Provider, Direction, SteamingFindOptions
 from .bitcoind import BitcoinDaemonProvider, BitcoinMongoProvider
 from .bitcore import BitcoreProvider
-from ..ext.database import MongoDatabase, connect_database
+from ..ext.blockchain import get_blockchain
+from ..ext.database import connect_database
 
 
 @register_handler
@@ -18,27 +18,10 @@ async def provider(request: Request) -> Provider:
     network = path_params['network']
 
     async with connect_database(request) as database:
+        blockchain = get_blockchain(chain, network, request.app)
+        if blockchain is None:
+            raise NotImplementedError((chain, network))
+
         # noinspection PyShadowingNames
-        provider = get_provider(request, chain, network, database)
-        async with provider:
+        async with blockchain.with_full_provider(database) as provider:
             yield provider
-
-
-def get_provider(request: Request, chain: str, network: str, database: MongoDatabase) -> Provider:
-    def get_bitcoind_provider():
-        return BitcoinDaemonProvider(
-            chain,
-            network,
-            "http://127.0.0.1:18332",
-            auth=HTTPBasicAuth("user", "password"),
-        )
-
-    if chain == "BTC" and network == "testnet":
-        provider = get_bitcoind_provider()
-        return BitcoinMongoProvider(chain, "localnet", database, provider)
-    elif chain == "BTC" and network == "localnet":
-        return get_bitcoind_provider()
-    elif chain == "BTC" or chain == "BCH":
-        return BitcoreProvider(chain, network)
-    else:
-        raise NotImplementedError((chain, network))
