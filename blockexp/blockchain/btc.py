@@ -4,9 +4,9 @@ from urllib.parse import urlparse, ParseResult
 
 from requests.auth import HTTPBasicAuth
 
-from blockexp.ext.database import MongoDatabase
 from .base import Blockchain
 from ..application import Application
+from ..ext.database import MongoDatabase
 from ..importer.bitcoind import BitcoinDaemonImporter
 from ..provider import Provider
 from ..provider.bitcoind import BitcoinDaemonProvider, BitcoinMongoProvider

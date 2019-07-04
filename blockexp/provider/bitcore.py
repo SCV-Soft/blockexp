@@ -1,14 +1,12 @@
-import typing
-from typing import Union, Type, TypeVar, cast, Any, List
+from typing import Union, List, Any, cast, Type, TypeVar
 
 import typing_inspect
 from requests_async import Response
 
-from blockexp.model import Authhead, TransactionId, AddressBalance, Coin, EstimateFee
-from starlette_typed.marshmallow import build_schema, Schema
 from .base import Provider, ProviderType
-from blockexp.provider import SteamingFindOptions
-from ..model import Block, Transaction, CoinListing
+from ..model import get_schema, Block, Transaction, CoinListing, Authhead, TransactionId, AddressBalance, Coin, \
+    EstimateFee
+from ..provider import SteamingFindOptions
 from ..proxy.bitcore import AsyncBitcore
 
 T = TypeVar('T')
