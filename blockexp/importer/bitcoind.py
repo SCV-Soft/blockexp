@@ -130,19 +130,31 @@ class BitcoinDaemonImporter(Importer):
 
     async def task_progress_sync(self):
         print('progress syncing')
-        local_tip = await self.get_local_tip()
         db_tip = await self.get_db_tip()
+        local_tip = await self.get_local_tip()
+
+        # TODO: store state in mongodb (detect full sync)
+
         assert db_tip is not None, 'full sync missing'
         print(await self.get_db_block(0))
 
-        for height in range(max(0, db_tip.height - 6), db_tip.height + 1):
-            print('check block height:', height)
-            local_block = await self.get_local_block(height)
-            db_block = await self.get_db_block(height)
-            if db_block is None or local_block.hash != db_block.hash:
-                await self.undo_block(height)
-                db_tip = await self.get_db_tip()
+        height = db_tip.height
+        offset = None
+        while True:
+            local_block = await self.get_local_block(height - (offset or 0))
+            db_block = await self.get_db_block(height - (offset or 0))
+            if db_block is not None and local_block.hash == db_block.hash:
                 break
+
+            if offset is None:
+                offset = 0
+            else:
+                offset -= 1
+
+        if offset is not None:
+            await self.undo_block(height + offset)
+            db_tip = await self.get_db_tip()
+            local_tip = await self.get_local_tip()
 
         for height in tqdm(range(db_tip.height, local_tip.height)):
             await self.import_block(height)
