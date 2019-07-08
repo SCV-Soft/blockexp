@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
+from aiocache import cached
 from starlette.requests import Request
 from starlette.routing import Router
 
@@ -42,10 +43,15 @@ async def stream_blocks(request: Request, path: ApiPath, query: StreamBlockApiQu
     )
 
 
+@cached(ttl=30)
+async def get_cached_local_tip(provider: Provider):
+    return await provider.get_local_tip()
+
+
 @api.route('/tip', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
 async def get_tip(request: Request, path: ApiPath, provider: Provider) -> Block:
-    return await provider.get_local_tip()
+    return await get_cached_local_tip(provider)
 
 
 @dataclass
