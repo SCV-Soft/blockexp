@@ -1,5 +1,6 @@
 from typing import Any
 
+import uvicorn
 from starlette.applications import Starlette
 
 from .service import Service
@@ -32,8 +33,15 @@ class Application(Starlette):
     def register_extension(self, extension: Any):
         self.extensions[extension.__name__] = extension.init_app(self)
 
+    def serve(self):
+        uvicorn.run(
+            self,
+            host=self.config.get('HOST', '0.0.0.0'),
+            port=self.config.get('PORT', 8000),
+        )
 
-def init_app(*, debug=False) -> Starlette:
+
+def init_app(*, debug=False) -> Application:
     app = Application(debug=debug)
 
     from . import config
