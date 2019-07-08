@@ -1,14 +1,33 @@
+from http import HTTPStatus
+from json import JSONDecodeError
 from typing import Any, Tuple, Optional
 
 import requests_async as requests
 from h11 import RemoteProtocolError
 from requests.auth import HTTPBasicAuth
-from requests_async import Response
 from requests.exceptions import ConnectionError as RequestsConnectionError
+from requests_async import Response
 
 
 class JSONRPCException(Exception):
     pass
+
+
+class JSONRPCUnauthorized(JSONRPCException):
+    pass
+
+
+class JSONRPCInvalidResponse(JSONRPCException):
+    message: str
+    response: Response
+
+    def __init__(self, message: str, response: Response):
+        super().__init__(message)
+        self.message = message
+        self.response = response
+
+    def __str__(self):
+        return f'{self.message}\n{self.response.text}'
 
 
 class JSONRPCError(JSONRPCException):
@@ -72,7 +91,16 @@ class AsyncJsonRPC:
             else:
                 break
 
-        result_id, result, error = jsonrpc20_result(response.json())
+        # 401 error code
+        if response.status_code == HTTPStatus.UNAUTHORIZED:
+            raise JSONRPCUnauthorized('Unauthorized error')
+
+        try:
+            data = response.json()
+        except JSONDecodeError as e:
+            raise JSONRPCInvalidResponse('invalid json', response=response) from e
+
+        result_id, result, error = jsonrpc20_result(data)
         if result_id != 0:
             raise JSONRPCException("invalid result", result_id)
 
