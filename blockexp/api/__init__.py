@@ -4,7 +4,7 @@ from starlette.routing import Router
 
 from starlette_typed import TypedStarlettePlugin
 from starlette_typed.apispec import patch_apispec_orderdict
-from . import bitcore, eth
+from . import bitcore
 
 patch_apispec_orderdict()
 
