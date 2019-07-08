@@ -1,4 +1,6 @@
-from blockexp.debug import main
+from blockexp import init_app
+
+app = init_app()
 
 if __name__ == '__main__':
-    main()
+    app.serve()
