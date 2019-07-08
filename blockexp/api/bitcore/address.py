@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Any
+from typing import List
 
 from starlette.requests import Request
 from starlette.routing import Router
@@ -28,8 +28,8 @@ class AddressApiQuery:
 @api.route('/{address}/txs', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
 async def stream_address_transactions(request: Request, path: AddressApiPath, query: AddressApiQuery,
-                                      provider: Provider) -> Any:
-    return await provider.stream_address_transactions(
+                                      provider: Provider) -> List[Coin]:
+    return await provider.stream_address_utxos(
         address=path.address,
         unspent=query.unspent,
         find_options=SteamingFindOptions(
