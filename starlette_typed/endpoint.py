@@ -236,7 +236,7 @@ def build_response(result: Any, description: Description) -> Response:
     elif description.output_body is not None:
         return JSONResponse(description.output_body.dump(result))
     elif description.output_type is not None:
-        assert isinstance(result, description.output_type)
+        assert isinstance(result, description.output_type), (result, description.output_type)
         return JSONResponse(result)
 
     return result
