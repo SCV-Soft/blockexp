@@ -19,11 +19,12 @@ def build_api() -> Router:
     api.mount('/{chain}/{network}/fee', fee.api)
     api.mount('/{chain}/{network}/stats', stats.api)
     api.mount('/{chain}/{network}/tx', tx.api)
-    # api.mount('/{chain}/{network}/wallet', wallet.api)
+    api.mount('/{chain}/{network}/wallet', wallet.api)
     api.mount('/status', status.api)
 
     api.add_route('/{chain}/{network}/block', block.stream_blocks, include_in_schema=False)
     api.add_route('/{chain}/{network}/tx', tx.stream_transactions, include_in_schema=False)
+    api.add_route('/{chain}/{network}/wallet', wallet.create_wallet, methods=['POST'], include_in_schema=False)
 
     return api
 

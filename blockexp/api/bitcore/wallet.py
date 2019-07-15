@@ -1,11 +1,23 @@
+import base64
+import json
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Any
+from http import HTTPStatus
+from typing import Any, List
 
+from bitcoinlib.encoding import double_sha256
+from bitcoinlib.keys import Key
+from bitcoinlib.transactions import verify
 from starlette.requests import Request
+from starlette.responses import Response
 from starlette.routing import Router
 
+from blockexp.model import Balance, Transaction, WalletCheckResult
+from blockexp.provider.base import SteamingFindOptions
 from starlette_typed import typed_endpoint
+from starlette_typed.endpoint import register_handler
 from . import ApiPath
+from ...model import Wallet, Coin
 from ...provider import Provider
 
 api = Router()
@@ -18,15 +30,17 @@ class WalletApiPath(ApiPath):
 
 @dataclass
 class CreateWalletApiBody:
+    chain: str
+    network: str
     name: str
     pubKey: str
-    path: str
-    singleAddress: bool
+    path: str = None
+    singleAddress: bool = None
 
 
 @api.route('/', methods=['POST'])
 @typed_endpoint(tags=["bitcore"])
-async def create_wallet(request: Request, path: ApiPath, body: CreateWalletApiBody, provider: Provider) -> Any:
+async def create_wallet(request: Request, path: ApiPath, body: CreateWalletApiBody, provider: Provider) -> Wallet:
     return await provider.create_wallet(
         name=body.name,
         pub_key=body.pubKey,
@@ -35,47 +49,113 @@ async def create_wallet(request: Request, path: ApiPath, body: CreateWalletApiBo
     )
 
 
-@api.route('/{pub_key}/addresses/missing', methods=['GET'])
-@typed_endpoint(tags=["bitcore"])
-async def stream_missing_wallet_addresses(request: Request, path: WalletApiPath, provider: Provider) -> str:
-    raise NotImplementedError
+@register_handler
+@asynccontextmanager
+async def wallet(request: Request) -> Wallet:
+    provider = request.scope['provider']
+    path = request.scope['path']
+    query_string = request.scope['query_string']
+    pub_key = request.path_params['pub_key']
+
+    # noinspection PyShadowingNames
+    wallet = await provider.get_wallet(pub_key)
+    if True:
+        # TODO: remove bypass vaildate
+        yield wallet
+        return
+
+    # request['path']
+
+    # noinspection PyUnreachableCode
+    message = '|'.join([
+        request.method,
+        path if not query_string else f'{path}?{query_string}',
+        json.dumps(await request.json()),
+    ]).encode('utf-8')
+
+    message_hash = double_sha256(message)
+    key = Key(pub_key)
+
+    x_signature = request.headers.get('x-signature', '')
+    signature = base64.b16decode(x_signature, casefold=True)
+
+    if not signature:
+        raise Exception('Signature must exist')
+
+    if not verify(message_hash, signature, key):
+        raise Exception('Verify signature failure')
+
+    yield wallet
+
+
+@dataclass
+class WalletAddressItem:
+    address: str
 
 
 @dataclass
 class LimitApiQuery:
-    limit: int
+    limit: int = None
     ...  # hidden argument for provider.streamWalletUtxos or provider.streamWalletTransactions
+
+
+@api.route('/{pub_key}/addresses/missing', methods=['GET'])
+@typed_endpoint(tags=["bitcore"])
+async def stream_missing_wallet_addresses(request: Request, path: WalletApiPath, provider: Provider,
+                                          wallet: Wallet) -> List[WalletAddressItem]:
+    return [WalletAddressItem(address) for address in await provider.stream_missing_wallet_addresses(wallet)]
 
 
 @api.route('/{pub_key}/addresses', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
 async def stream_wallet_addresses(request: Request, path: WalletApiPath, query: LimitApiQuery,
-                                  provider: Provider) -> str:
-    raise NotImplementedError
+                                  provider: Provider, wallet: Wallet) -> List[WalletAddressItem]:
+    return [WalletAddressItem(item.address)
+            for item in await provider.stream_wallet_addresses(wallet, query.limit)]
 
 
 @api.route('/{pub_key}/check', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def wallet_check(request: Request, path: WalletApiPath, provider: Provider) -> str:
-    raise NotImplementedError
+async def wallet_check(request: Request, path: WalletApiPath, provider: Provider, wallet: Wallet) -> WalletCheckResult:
+    return await provider.wallet_check(wallet)
 
 
 @api.route('/{pub_key}', methods=['POST'])
 @typed_endpoint(tags=["bitcore"])
-async def update_wallet(request: Request, path: WalletApiPath, provider: Provider) -> str:
-    raise NotImplementedError
+async def update_wallet(request: Request, path: WalletApiPath, provider: Provider, wallet: Wallet,
+                        body: List[WalletAddressItem]) -> Wallet:
+    await provider.update_wallet(wallet, [item.address for item in body])
+    return wallet
+
+
+@dataclass
+class WalletTransactionQuery:
+    startBlock: int = None
+    endBlock: int = None
+    startDate: str = None
+    endDate: str = None
+    includeMempool: bool = None
 
 
 @api.route('/{pub_key}/transactions', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def stream_wallet_transactions(request: Request, path: WalletApiPath, provider: Provider) -> str:
-    raise NotImplementedError
+async def stream_wallet_transactions(request: Request, path: WalletApiPath, query: WalletTransactionQuery,
+                                     provider: Provider, wallet: Wallet) -> List[Transaction]:
+    return await provider.stream_wallet_transactions(
+        wallet,
+        start_block=query.startBlock,
+        end_block=query.endBlock,
+        start_date=query.startDate,
+        end_date=query.endDate,
+        # includeMempool is ignored
+        find_options=SteamingFindOptions(),
+    )
 
 
 @api.route('/{pub_key}/balance', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def get_wallet_balance(request: Request, path: WalletApiPath, provider: Provider) -> str:
-    raise NotImplementedError
+async def get_wallet_balance(request: Request, path: WalletApiPath, provider: Provider, wallet: Wallet) -> Balance:
+    return await provider.get_wallet_balance(wallet)
 
 
 @dataclass
@@ -85,17 +165,25 @@ class WalletTimeApiRequest(WalletApiPath):
 
 @api.route('/{pub_key}/balance/{time}', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def get_wallet_balance_at_time(request: Request, path: WalletTimeApiRequest, provider: Provider) -> str:
-    raise NotImplementedError
+async def get_wallet_balance_at_time(request: Request, path: WalletTimeApiRequest, provider: Provider,
+                                     wallet: Wallet) -> Balance:
+    return await provider.get_wallet_balance_at_time(wallet, path.time)
+
+
+@dataclass
+class WalletUtxosApiQuery(LimitApiQuery):
+    includeSpent: bool = False
 
 
 @api.route('/{pub_key}/utxos', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def stream_wallet_utxos(request: Request, path: WalletApiPath, query: LimitApiQuery, provider: Provider) -> str:
-    raise NotImplementedError
+async def stream_wallet_utxos(request: Request, path: WalletApiPath, query: WalletUtxosApiQuery,
+                              provider: Provider, wallet: Wallet) -> List[Coin]:
+    return await provider.stream_wallet_utxos(wallet, query.limit, query.includeSpent)
 
 
 @api.route('/{pub_key}', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def pubkey(request: Request, path: WalletApiPath, provider: Provider) -> str:
-    raise NotImplementedError
+async def get_wallet(request: Request, path: WalletApiPath, provider: Provider, wallet: Wallet) -> Wallet:
+    # already loaded by wallet fixture
+    return wallet
