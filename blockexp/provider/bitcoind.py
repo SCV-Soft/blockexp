@@ -2,16 +2,17 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Union, Any, List, Optional
 
-from pymongo import DESCENDING
-from pymongo.cursor import Cursor
+from pymongo import DESCENDING, ASCENDING, InsertOne, UpdateMany, UpdateOne
 from requests.auth import HTTPBasicAuth
 
-from blockexp.error import BlockNotFound, TransactionNotFound
-from ..ext.database import MongoDatabase, MongoCollection
-from ..model import Block, Transaction, EstimateFee, TransactionId, CoinListing, Authhead, AddressBalance, Coin
 from .base import Provider, ProviderType, SteamingFindOptions, DailyTransactions, Direction, RawProvider
+from ..error import BlockNotFound, TransactionNotFound, WalletNotFound
+from ..ext.database import MongoDatabase, MongoCollection, bulk_write_for
+from ..model import Block, Transaction, EstimateFee, TransactionId, CoinListing, Authhead, Balance, Coin, Wallet, \
+    WalletAddress, WalletCheckResult
 from ..proxy.bitcoind import AsyncBitcoinDeamon
 from ..proxy.jsonrpc import JSONRPCError
+from ..utils import asrow
 
 
 @dataclass
@@ -21,10 +22,16 @@ class BtcVInCoinbase:
 
 
 @dataclass
+class BtcScriptSig:
+    asm: str
+    hex: str
+
+
+@dataclass
 class BtcVIn:
     txid: str
     vout: int
-    scriptSig: dict
+    scriptSig: BtcScriptSig
     sequence: int
     txinwitness: List[str] = None
 
@@ -261,6 +268,9 @@ class BitcoinDaemonProvider(RawProvider):
         block_hash = await self.rpc.getbestblockhash()
         return await self.get_block(block_hash)
 
+    async def get_fee(self, target: int) -> EstimateFee:
+        return EstimateFee(**(await self.rpc.estimatesmartfee(target)))
+
 
 class JackDaemonProvider(BitcoinDaemonProvider):
     def _convert_raw_transaction(self, transaction: dict) -> BtcTransaction:
@@ -283,23 +293,21 @@ class JackDaemonProvider(BitcoinDaemonProvider):
 
 
 class BitcoinMongoProvider(Provider):
-    def __init__(self, chain: str, network: str, database: MongoDatabase, provider: BitcoinDaemonProvider = None):
+    def __init__(self, chain: str, network: str, database: MongoDatabase, provider: BitcoinDaemonProvider):
         super().__init__(chain, network)
         self.database = database
         self.provider = provider
-        # TODO: cache tip for refresh confirm count
 
-    def convert_raw_block(self, raw_block: Any, tip: Block = None) -> Block:
+    def convert_raw_block(self, raw_block: dict, tip: Block = None) -> Block:
         block = Block(**raw_block, chain=self.chain, network=self.network)
         if tip is not None:
             block.confirmations = tip.height - block.height + 1
 
         return block
 
-    def convert_raw_transaction(self, raw_transaction: Any, raw_block: Any = None, tip: Block = None) -> Transaction:
+    def convert_raw_transaction(self, raw_transaction: dict, tip: Block = None) -> Transaction:
         raw_transaction.pop('chain', None)
         raw_transaction.pop('network', None)
-        raw_transaction.pop('wallets', None)
 
         transaction = Transaction(**raw_transaction, chain=self.chain, network=self.network)
         if tip is not None:
@@ -308,11 +316,13 @@ class BitcoinMongoProvider(Provider):
         return transaction
 
     def convert_raw_coin(self, raw_coin: dict) -> Coin:
-        wallets = raw_coin['wallets']
-        if wallets:
-            raw_coin.setdefault('address', wallets[0])
-
         return Coin(**raw_coin, chain=self.chain, network=self.network)
+
+    def convert_raw_wallet(self, raw_wallet: dict) -> Wallet:
+        return Wallet(**raw_wallet, chain=self.chain, network=self.network)
+
+    def convert_raw_wallet_address(self, raw_wallet_address: dict) -> WalletAddress:
+        return WalletAddress(**raw_wallet_address, chain=self.chain, network=self.network)
 
     @property
     def _collection_key(self) -> str:
@@ -330,12 +340,18 @@ class BitcoinMongoProvider(Provider):
     def coin_collection(self) -> MongoCollection:
         return self.database[f'{self._collection_key}:coins']
 
+    @property
+    def wallet_collection(self) -> MongoCollection:
+        return self.database[f'{self._collection_key}:wallets']
+
+    @property
+    def wallet_address_collection(self) -> MongoCollection:
+        return self.database[f'{self._collection_key}:walletaddresses']
+
     async def streaming(self,
                         collection: MongoCollection,
                         query: dict,
-                        find_options: SteamingFindOptions,
-                        *,
-                        model: Any = None) -> List[dict]:
+                        find_options: SteamingFindOptions) -> List[dict]:
         if find_options.limit is None:
             find_options.limit = 10
 
@@ -381,13 +397,7 @@ class BitcoinMongoProvider(Provider):
         raw_coins = await self.streaming(self.coin_collection, query, find_options)
         return [self.convert_raw_coin(raw_coin) for raw_coin in raw_coins]
 
-    async def get_balance_for_address(self, address: str) -> AddressBalance:
-        raw_coins = self.coin_collection.find({
-            'wallets': address,
-            'spentHeight': {'$lt': 0},
-            'mintHeight': {'$gt': -3},
-        })
-
+    async def _get_balance_in_cursor(self, raw_coins) -> Balance:
         confirmed = 0
         unconfirmed = 0
         balance = 0
@@ -403,14 +413,24 @@ class BitcoinMongoProvider(Provider):
 
             balance += value
 
-        return AddressBalance(confirmed=confirmed, unconfirmed=unconfirmed, balance=balance)
+        return Balance(confirmed=confirmed, unconfirmed=unconfirmed, balance=balance)
+
+    async def get_balance_for_address(self, address: str) -> Balance:
+        raw_coins = self.coin_collection.find({
+            'address': address,
+            'spentHeight': {'$lt': 0},
+            'mintHeight': {'$gt': -3},
+        })
+
+        return await self._get_balance_in_cursor(raw_coins)
 
     async def stream_blocks(self,
                             since_block: Union[str, int] = None,
                             start_date: str = None,
                             end_date: str = None,
                             date: str = None,
-                            find_options: SteamingFindOptions = None) -> List[Block]:
+                            *,
+                            find_options: SteamingFindOptions) -> List[Block]:
         query = {}
 
         if since_block is None:
@@ -435,6 +455,9 @@ class BitcoinMongoProvider(Provider):
                 '$gt': date.isoformat(),
                 '$lt': next_date.isoformat(),
             })
+
+        if find_options is None:
+            find_options = SteamingFindOptions()
 
         find_options.sort = [('height', DESCENDING)]
 
@@ -486,32 +509,225 @@ class BitcoinMongoProvider(Provider):
     async def get_authhead(self, tx_id: str) -> Authhead:
         raise NotImplementedError("NOT IMPLEMENTED YET")
 
-    async def create_wallet(self, name: str, pub_key: str, path: str, single_address: bool) -> Any:
-        raise NotImplementedError
+    async def create_wallet(self,
+                            name: str,
+                            pub_key: str,
+                            path: Optional[str],
+                            single_address: Optional[bool]) -> Wallet:
+        wallet = Wallet(
+            chain=self.chain,
+            network=self.network,
+            name=name,
+            pubKey=pub_key,
+            path=path,
+            singleAddress=single_address,
+        )
 
-    async def wallet_check(self):
-        raise NotImplementedError
+        await self.wallet_collection.find_one_and_update(
+            filter={'pubKey': wallet.pubKey},
+            update={'$set': asrow(wallet)},
+            upsert=True,
+        )
 
-    async def stream_missing_wallet_addresses(self):
-        raise NotImplementedError
+        return wallet
 
-    async def update_wallet(self):
-        raise NotImplementedError
+    async def wallet_check(self, wallet: Wallet) -> WalletCheckResult:
+        assert wallet._id is not None
 
-    async def stream_wallet_transactions(self):
-        raise NotImplementedError
+        raw_wallet_addresses = self.wallet_address_collection.find({'wallet': wallet._id})
 
-    async def get_wallet_balance(self):
-        raise NotImplementedError
+        last_address = None
+        total = 0
+        async for raw_wallet_address in raw_wallet_addresses:
+            wallet_address = self.convert_raw_wallet_address(raw_wallet_address)
+            last_address = address = wallet_address.address
+            total += sum(address.encode('ascii'))
 
-    async def get_wallet_balance_at_time(self):
-        raise NotImplementedError
+        total %= 9007199254740991  # Number.MAX_SAFE_INTEGER
+        return WalletCheckResult(lastAddress=last_address, sum=total)
 
-    async def stream_wallet_utxos(self):
-        raise NotImplementedError
+    async def stream_missing_wallet_addresses(self, wallet: Wallet):
+        assert wallet._id is not None
+
+        raw_coins = self.coin_collection.find({
+            'wallets': wallet._id,
+            'spentHeight': {'$gte': 0},
+        })
+
+        seen = set()
+        total_missing_value = 0
+        missing_addresses = set()
+
+        async for raw_coin in raw_coins:
+            coin = self.convert_raw_coin(raw_coin)
+            if coin.spentTxid not in seen:
+                seen.add(coin.spentTxid)
+
+                missings = []
+                raw_spends = self.coin_collection.find({'spentTxid': coin.spentTxid})
+                async for raw_spend in raw_spends:
+                    spend = self.convert_raw_coin(raw_spend)
+                    if wallet._id not in coin.wallets:
+                        total_missing_value += spend.value
+                        missing = asrow(coin)
+                        missing['expected'] = wallet._id
+
+                        missing_addresses.update(spend.addresses)
+                        missings.append(missing)
+
+        # TODO: streamMissingWalletAddresses [???
+
+    async def stream_wallet_addresses(self, wallet: Wallet, limit: int) -> List[WalletAddress]:
+        wallet_addresses = []
+        async for raw_wallet_address in self.wallet_address_collection.find({'wallet': wallet._id}):
+            wallet_address = self.convert_raw_wallet_address(raw_wallet_address)
+            wallet_addresses.append(wallet_address)
+
+        return wallet_addresses
+
+    async def update_wallet(self, wallet: Wallet, addresses: List[str]):
+        exist_addresses = {
+            item.get('address', self.convert_raw_wallet_address(item).address)  # ?
+            async for item in self.wallet_address_collection.find({
+                'wallet': wallet._id,
+                'address': {'$in': addresses},
+            })
+        }
+
+        addresses = [
+            address
+            for address in addresses
+            if address not in exist_addresses
+        ]
+
+        async with bulk_write_for(self.wallet_address_collection, ordered=False) as db_ops:
+            for address in addresses:
+                db_ops.append(InsertOne({
+                    'wallet': wallet._id,
+                    'address': address,
+                    'processed': False,
+                }))
+
+        async with bulk_write_for(self.coin_collection, ordered=False) as db_ops:
+            for address in addresses:
+                db_ops.append(UpdateMany(
+                    filter={'address': address},
+                    update={'$addToSet': {'wallets': wallet._id}}
+                ))
+
+        txids = set()
+        async for item in self.coin_collection.find(
+                filter={'address': {'$in': addresses}},
+                projection={'mintTxid': True, 'spentTxid': True}
+        ):
+            for txid in item['mintTxid'], item['spentTxid']:
+                if txid is not None:
+                    txids.add(txid)
+
+        await self.tx_collection.update_many(
+            filter={'txid': {'$in': list(txids)}},
+            update={'$addToSet': {'wallets': wallet._id}},
+        )
+
+        async with bulk_write_for(self.wallet_address_collection, ordered=False) as db_ops:
+            for address in addresses:
+                db_ops.append(UpdateOne(
+                    filter={
+                        'wallet': wallet._id,
+                        'address': address,
+                    },
+                    update={
+                        '$set': {
+                            'processed': True,
+                        }
+                    },
+                ))
+
+    async def stream_wallet_transactions(self,
+                                         wallet: Wallet,
+                                         start_block: int = None,
+                                         end_block: int = None,
+                                         start_date: str = None,
+                                         end_date: str = None,
+                                         *,
+                                         find_options: SteamingFindOptions) -> List[Transaction]:
+        assert wallet._id is not None
+
+        query = {'wallets': wallet._id}
+
+        if start_block is not None:
+            query.setdefault('blockHeight', {}).update({'$gte': start_block})
+
+        if end_block is not None:
+            query.setdefault('blockHeight', {}).update({'$lte': end_block})
+
+        if start_date:
+            start_date = datetime.fromisoformat(start_date)
+            query.setdefault('blockTimeNormalized', {}).update({'$gt': start_date.isoformat()})
+
+        if end_date:
+            end_date = datetime.fromisoformat(end_date)
+            query.setdefault('blockTimeNormalized', {}).update({'$lt': end_date.isoformat()})
+
+        if find_options is None:
+            find_options = SteamingFindOptions()
+
+        find_options.sort = [('blockTimeNormalized', ASCENDING)]
+
+        tip = await self.get_local_tip()
+        raw_transactions = await self.streaming(self.tx_collection, query, find_options)
+        return [self.convert_raw_transaction(raw_transaction, tip=tip)
+                for raw_transaction in raw_transactions]
+
+    async def get_wallet_balance(self, wallet: Wallet) -> Balance:
+        raw_coins = self.coin_collection.find({
+            'wallets': wallet._id,
+            'spentHeight': {'$lt', 0},
+            'mintHeight': {'$gt': -3},
+        })
+
+        return await self._get_balance_in_cursor(raw_coins)
+
+    async def get_wallet_balance_at_time(self, wallet: Wallet, time: str) -> Balance:
+        raw_block = await self.block_collection.find_one({
+            'timeNormalized': {'$lte', datetime.fromisoformat(time)}
+        }, sort=[('timeNormalized', DESCENDING)])
+
+        block = self.convert_raw_block(raw_block)
+
+        raw_coins = self.coin_collection.find({
+            'wallets': wallet._id,
+            '$or': [
+                {'spentHeight': {'$gt', block.height}},
+                {'spentHeight': -2},
+            ],
+            'mintHeight': {'$lte': block.height},
+        })
+
+        return await self._get_balance_in_cursor(raw_coins)
+
+    async def stream_wallet_utxos(self,
+                                  wallet: Wallet,
+                                  limit: int = None,
+                                  include_spent: bool = False) -> List[Coin]:
+        raw_coins = self.coin_collection.find({
+            'wallets': wallet._id,
+            'spentHeight': -2,
+            'mintHeight': {'$gte': 0},
+        })
+
+        return [self.convert_raw_coin(raw_coin)
+                async for raw_coin in raw_coins]
+
+    async def get_wallet(self, pub_key: str) -> Wallet:
+        raw_wallet = await self.wallet_collection.find_one({'pubKey': pub_key})
+        if not raw_wallet:
+            raise WalletNotFound(pub_key)
+
+        return self.convert_raw_wallet(raw_wallet)
 
     async def get_fee(self, target: int) -> EstimateFee:
-        raise NotImplementedError
+        return await self.provider.get_fee(target)
 
     async def broadcast_transaction(self, raw_tx: Any) -> TransactionId:
         raise NotImplementedError
