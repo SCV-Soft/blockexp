@@ -1,12 +1,10 @@
 import asyncio
 import traceback
 from collections import defaultdict
-from dataclasses import asdict
 from enum import Enum
-from typing import Union, List, Optional, Any
+from typing import Union, List, Optional
 
 from pymongo import UpdateOne, DESCENDING
-from tqdm import tqdm
 
 from ..application import Application
 from ..ext.database import MongoCollection, bulk_write_for, connect_database_for
@@ -14,24 +12,9 @@ from ..importer.base import Importer
 from ..model import Block
 from ..provider.bitcoind import BitcoinDaemonProvider, BtcBlock, BtcTransaction, BtcVOut, BtcScriptPubKey, BtcVIn, \
     BtcVInCoinbase
-
-
-# https://learnmeabitcoin.com/glossary/script
-# https://api.bitcore.io/api/BTC/mainnet/address/35hK24tcLEWcgNA4JxpvbkNkoAcDGqQPsP/balance
-# http://127.0.0.1:8000/#/bitcore/get_api__chain___network__tx_
-# http://chainquery.com/bitcoin-api/help/getbestblockhash
-
-
-def value2amount(value: float) -> int:
-    return round(value * 1e8)
-
-
-def asrow(obj: Any) -> dict:
-    data = asdict(obj)
-    data.pop('_id')
-    data.pop('chain')
-    data.pop('network')
-    return data
+from ..proxy.jsonrpc import JSONRPCError
+from ..utils import asrow
+from ..utils.bitcoin import value2amount
 
 
 class BtcTxOutputType(str, Enum):
@@ -68,8 +51,15 @@ class BitcoinDaemonImporter(Importer):
     def coin_collection(self) -> MongoCollection:
         return self.database[f'{self._collection_key}:coins']
 
+    @property
+    def wallet_collection(self) -> MongoCollection:
+        return self.database[f'{self._collection_key}:wallets']
+
+    @property
+    def wallet_address_collection(self) -> MongoCollection:
+        return self.database[f'{self._collection_key}:walletaddresses']
+
     async def run(self):
-        print('begin work')
         while True:
             try:
                 await self.worker()
@@ -117,46 +107,47 @@ class BitcoinDaemonImporter(Importer):
         await self.tx_collection.create_index(index(wallets=1, blockTimeNormalized=1), background=True)
         await self.tx_collection.create_index(index(wallets=1, blockHeight=1), background=True)
 
+        # wallets
+        await self.wallet_collection.create_index(index(pubKey=1), background=True)
+
+        # walletaddresses
+        await self.wallet_address_collection.create_index(index(address=1, wallet=1), background=True, unique=True)
+        await self.wallet_address_collection.create_index(index(wallet=1, address=1), background=True, unique=True)
+
     async def task_full_sync(self):
         db_tip = await self.get_db_tip()
         if db_tip is not None:
             return
 
-        print('full syncing')
         local_tip = await self.get_local_tip()
         for height in range(local_tip.height + 1):
-            print('processing', height, 'block')
             await self.import_block(height)
 
     async def task_progress_sync(self):
-        print('progress syncing')
+        db_tip = await self.get_db_tip()
+
+        # TODO: store state in mongodb (detect full sync)
+        assert db_tip is not None, 'full sync missing'
+
+        height = db_tip.height
+        invalid = False
+        offset = 0
+        while True:
+            local_block = await self.get_local_block(height + offset)
+            db_block = await self.get_db_block(height + offset)
+            if db_block is not None and local_block is not None and local_block.hash == db_block.hash:
+                break
+
+            invalid = True
+            offset -= 1
+
+        if invalid:
+            await self.undo_block(height + offset)
+
         db_tip = await self.get_db_tip()
         local_tip = await self.get_local_tip()
 
-        # TODO: store state in mongodb (detect full sync)
-
-        assert db_tip is not None, 'full sync missing'
-        print(await self.get_db_block(0))
-
-        height = db_tip.height
-        offset = None
-        while True:
-            local_block = await self.get_local_block(height - (offset or 0))
-            db_block = await self.get_db_block(height - (offset or 0))
-            if db_block is not None and local_block.hash == db_block.hash:
-                break
-
-            if offset is None:
-                offset = 0
-            else:
-                offset -= 1
-
-        if offset is not None:
-            await self.undo_block(height + offset)
-            db_tip = await self.get_db_tip()
-            local_tip = await self.get_local_tip()
-
-        for height in tqdm(range(db_tip.height, local_tip.height)):
+        for height in range(db_tip.height + 1, local_tip.height + 1):
             await self.import_block(height)
 
     async def get_db_block(self, block_height: int) -> Optional[Block]:
@@ -176,17 +167,18 @@ class BitcoinDaemonImporter(Importer):
     async def get_local_block(self, block_height: int) -> Optional[Block]:
         try:
             return await self.provider.get_block(block_height)
-        except Exception as e:
-            print(repr(e))
-            traceback.print_exc()
-            return None
+        except JSONRPCError as e:
+            if e.code == -8:
+                return None
+
+            raise
 
     async def get_local_tip(self) -> Block:
         return await self.provider.get_local_tip()
         # return await self.get_local_block(1200)
 
     async def undo_block(self, height: int):
-        print('undo block', height)
+        print(self.chain, self.network, 'undo block', height)
 
         await self.block_collection.delete_many(
             {'height': {'$gte': height}}
@@ -211,6 +203,7 @@ class BitcoinDaemonImporter(Importer):
         )
 
     async def import_block(self, height: int):
+        print(self.chain, self.network, 'processing', height, 'block')
         raw_block: BtcBlock = await self.provider.get_raw_block(height)
 
         mint_ops = self.get_mint_ops(height, raw_block.tx)
