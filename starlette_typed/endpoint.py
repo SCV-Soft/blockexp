@@ -221,7 +221,7 @@ async def parse_request(request: Request, description: Description) -> Tuple[dic
 
     for name, handler in description.extras.items():
         context[name] = ctx = handler(request)
-        result[name] = await ctx.__aenter__()
+        request.scope[name] = result[name] = await ctx.__aenter__()
 
     return result, context
 
