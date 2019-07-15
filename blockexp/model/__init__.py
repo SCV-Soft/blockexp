@@ -1,7 +1,6 @@
 from dataclasses import dataclass, is_dataclass, field
-from typing import List, Optional, Type
-
 from datetime import datetime
+from typing import List, Optional, Type
 
 from starlette_typed.marshmallow import check_schema, Schema, build_schema
 
@@ -48,7 +47,8 @@ class Coin:
     coinbase: bool
     value: int
     script: str
-    address: str = None  # TODO: how to address
+    address: str = None
+    addresses: List[str] = field(default_factory=list)
     spentTxid: str = None
     spentHeight: int = -1
     confirmations: Optional[int] = 0
@@ -87,7 +87,9 @@ class Transaction:
     outputCount: int
     value: int
     confirmations: Optional[int] = None
-    wallets: List[str] = None
+    address: str = None
+    addresses: List[str] = field(default_factory=list)
+    wallets: List[str] = field(default_factory=list)
     _id: str = None
 
 
