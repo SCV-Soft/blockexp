@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import random
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Union, List, cast, Optional
@@ -19,7 +18,6 @@ from pymongo.errors import BulkWriteError
 from pymongo.results import InsertOneResult, InsertManyResult, DeleteResult, UpdateResult
 from starlette.requests import Request
 
-from starlette_typed.endpoint import register_handler
 from ..application import Application
 
 if TYPE_CHECKING:
