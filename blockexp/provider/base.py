@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from enum import IntEnum, Enum
-from typing import Union, Any, TypeVar, List
+from typing import Union, Any, TypeVar, List, Optional
 
-from ..model import Block, Transaction, CoinListing, Authhead, TransactionId, AddressBalance, EstimateFee
+from ..model import Block, Transaction, CoinListing, Authhead, TransactionId, Balance, EstimateFee, Wallet, Coin, \
+    WalletAddress
 
 T = TypeVar('T')
 
@@ -93,7 +94,7 @@ class Provider:
     async def stream_address_utxos(self, address: str, unspent: bool, find_options: SteamingFindOptions) -> List[Any]:
         raise NotImplementedError
 
-    async def get_balance_for_address(self, address: str) -> AddressBalance:
+    async def get_balance_for_address(self, address: str) -> Balance:
         raise NotImplementedError
 
     async def stream_blocks(self,
@@ -101,7 +102,8 @@ class Provider:
                             start_date: str = None,
                             end_date: str = None,
                             date: str = None,
-                            find_options: SteamingFindOptions = None) -> List[Block]:
+                            *,
+                            find_options: SteamingFindOptions) -> List[Block]:
         raise NotImplementedError
 
     async def get_block(self, block_id: Union[str, int]) -> Block:
@@ -119,28 +121,48 @@ class Provider:
     async def get_authhead(self, tx_id: str) -> Authhead:
         raise NotImplementedError
 
-    async def create_wallet(self, name: str, pub_key: str, path: str, single_address: bool) -> Any:
+    async def create_wallet(self,
+                            name: str,
+                            pub_key: str,
+                            path: Optional[str],
+                            single_address: Optional[bool]) -> Wallet:
         raise NotImplementedError
 
-    async def wallet_check(self):
+    async def wallet_check(self, wallet: Wallet):
         raise NotImplementedError
 
-    async def stream_missing_wallet_addresses(self):
+    async def stream_missing_wallet_addresses(self, wallet: Wallet) -> List[str]:
         raise NotImplementedError
 
-    async def update_wallet(self):
+    async def stream_wallet_addresses(self, wallet: Wallet, limit: int) -> List[WalletAddress]:
         raise NotImplementedError
 
-    async def stream_wallet_transactions(self):
+    async def update_wallet(self, wallet: Wallet, addresses: List[str]):
         raise NotImplementedError
 
-    async def get_wallet_balance(self):
+    async def stream_wallet_transactions(self,
+                                         wallet: Wallet,
+                                         start_block: int = None,
+                                         end_block: int = None,
+                                         start_date: str = None,
+                                         end_date: str = None,
+                                         *,
+                                         find_options: SteamingFindOptions) -> List[Transaction]:
         raise NotImplementedError
 
-    async def get_wallet_balance_at_time(self):
+    async def get_wallet_balance(self, wallet: Wallet) -> Balance:
         raise NotImplementedError
 
-    async def stream_wallet_utxos(self):
+    async def get_wallet_balance_at_time(self, wallet: Wallet, time: str) -> Balance:
+        raise NotImplementedError
+
+    async def stream_wallet_utxos(self,
+                                  wallet: Wallet,
+                                  limit: int = None,
+                                  include_spent: bool = False) -> List[Coin]:
+        raise NotImplementedError
+
+    async def get_wallet(self, pub_key: str) -> Wallet:
         raise NotImplementedError
 
     async def get_fee(self, target: int) -> EstimateFee:
