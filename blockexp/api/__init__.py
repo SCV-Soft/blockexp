@@ -19,5 +19,5 @@ apispec = APISpec(
 )
 
 api = Router()
-api.mount('/eth', eth.api)
+# api.mount('/eth', eth.api)
 api.mount('/', bitcore.api)
