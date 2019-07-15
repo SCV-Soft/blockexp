@@ -1,7 +1,10 @@
 from typing import Any
 
 import uvicorn
+from requests import Request
 from starlette.applications import Starlette
+from starlette.responses import Response
+import socketio
 
 from .service import Service
 
@@ -12,9 +15,13 @@ class Application(Starlette):
         self.extensions = {}
         self.config = {}
         self.services = []
+        self.sio = socketio.AsyncServer(async_mode='asgi')
 
         self.on_event("startup")(self.on_startup)
         self.on_event("shutdown")(self.on_shutdown)
+
+    def ready(self) -> socketio.ASGIApp:
+        return socketio.ASGIApp(self.sio, self)
 
     async def on_startup(self):
         for service in self.services:
@@ -35,7 +42,7 @@ class Application(Starlette):
 
     def serve(self):
         uvicorn.run(
-            self,
+            self.ready(),
             host=self.config.get('HOST', '0.0.0.0'),
             port=self.config.get('PORT', 8000),
         )

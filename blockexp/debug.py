@@ -64,6 +64,6 @@ def main():
 
 def __getattr__(name):
     if name == "app":
-        return init_app(debug=True)
+        return init_app(debug=True).ready()
 
     raise AttributeError(name)
