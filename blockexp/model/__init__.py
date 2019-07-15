@@ -109,6 +109,33 @@ class EstimateFee:
     blocks: int
 
 
+@dataclass
+class Wallet:
+    chain: str
+    network: str
+    name: str
+    pubKey: str
+    path: Optional[str] = None
+    singleAddress: Optional[bool] = None
+    _id: str = None
+
+
+@dataclass
+class WalletAddress:
+    chain: str
+    network: str
+    wallet: str
+    address: str
+    processed: bool = False
+    _id: str = None
+
+
+@dataclass
+class WalletCheckResult:
+    lastAddress: Optional[str]
+    sum: int
+
+
 for cls in list(globals().values()):
     if is_dataclass(cls):
         check_schema(cls)
