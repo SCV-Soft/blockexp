@@ -1,5 +1,5 @@
 import asyncio
-from typing import Iterator, Optional
+from typing import Iterator, Optional, Dict
 
 from ..application import Application
 from ..blockchain import Blockchain
@@ -11,28 +11,44 @@ from ..service import Service
 class ImportBlockchainService(Service):
     def __init__(self, app: Application):
         self.app = app
-        self.importers = []
-        self.tasks = []
+        self.tasks: Dict[Blockchain, asyncio.Task] = {}
+        self.watcher = None
 
     async def on_startup(self):
         for blockchain in iter_blockchain(self.app):
-            importer = blockchain.get_importer()
-            if importer is not None:
-                task: asyncio.Future = asyncio.ensure_future(importer.run())
-                self.importers.append(importer)
-                self.tasks.append(task)
+            self.run_service(blockchain)
+
+        # self.watcher = asyncio.ensure_future(self.run())
+
+    def run_service(self, blockchain: Blockchain):
+        importer = blockchain.get_importer()
+        if importer is not None:
+            task: asyncio.Future = asyncio.ensure_future(importer.run())
+            self.tasks[blockchain] = task
+
+    async def run(self):
+        while True:
+            for service, task in self.tasks.items():
+                if task.cancelled():
+                    pass
+                elif task.done():
+                    exc = task.exception()
+                    if exc is None:
+                        pass
+
+            await asyncio.sleep(30)
 
     async def on_shutdown(self):
-        for task in self.tasks:
+        for task in self.tasks.values():
             task.cancel()
 
-        for task in self.tasks:
+        while self.tasks:
+            _, task = self.tasks.popitem()
+
             try:
                 await task
             except asyncio.CancelledError:
                 pass
-
-        del self.importers[:]
 
 
 def init_app(app: Application) -> dict:
