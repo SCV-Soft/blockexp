@@ -2,8 +2,8 @@ from contextlib import asynccontextmanager
 
 from requests import Request
 
-from blockexp.ext.database import MongoDatabase, connect_database
 from starlette_typed.endpoint import register_handler
+from ..ext.database import MongoDatabase, connect_database
 
 
 @register_handler
