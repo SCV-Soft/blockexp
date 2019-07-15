@@ -33,3 +33,7 @@ class TransactionNotFound(ObjectNotFound):
 
 class AddressNotFound(ObjectNotFound):
     pass
+
+
+class WalletNotFound(ObjectNotFound):
+    pass
