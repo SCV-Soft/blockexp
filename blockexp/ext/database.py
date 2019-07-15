@@ -207,8 +207,8 @@ class MongoCollection:
                                                  bypass_document_validation=bypass_document_validation,
                                                  collation=collation, array_filters=array_filters, session=self.session)
 
-    def find(self, *args, **kwargs) -> AsyncIOMotorCursor:
-        return self._collection.find(*args, **kwargs, session=self.session)
+    def find(self, filter, projection=None, **kwargs) -> AsyncIOMotorCursor:
+        return self._collection.find(filter=filter, projection=projection, **kwargs, session=self.session)
 
     def find_raw_batches(self, *args, **kwargs) -> AsyncIOMotorCursor:
         return self._collection.find_raw_batches(*args, **kwargs, session=self.session)
