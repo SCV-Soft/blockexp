@@ -122,3 +122,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Ignore eth/web3 until fully stable
+*eth.*
+*web3.*
