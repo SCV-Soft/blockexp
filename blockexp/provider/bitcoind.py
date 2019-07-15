@@ -7,9 +7,9 @@ from pymongo.cursor import Cursor
 from requests.auth import HTTPBasicAuth
 
 from blockexp.error import BlockNotFound, TransactionNotFound
-from .base import Provider, ProviderType, SteamingFindOptions, DailyTransactions, Direction
 from ..ext.database import MongoDatabase, MongoCollection
 from ..model import Block, Transaction, EstimateFee, TransactionId, CoinListing, Authhead, AddressBalance, Coin
+from .base import Provider, ProviderType, SteamingFindOptions, DailyTransactions, Direction, RawProvider
 from ..proxy.bitcoind import AsyncBitcoinDeamon
 from ..proxy.jsonrpc import JSONRPCError
 
@@ -112,7 +112,7 @@ class BtcBlock:
             self.tx = [BtcTransaction(**item) for item in self.tx]
 
 
-class BitcoinDaemonProvider(Provider):
+class BitcoinDaemonProvider(RawProvider):
     def __init__(self, chain: str, network: str, url: str, auth: HTTPBasicAuth):
         super().__init__(chain, network)
         self.rpc = AsyncBitcoinDeamon(url, auth=auth)

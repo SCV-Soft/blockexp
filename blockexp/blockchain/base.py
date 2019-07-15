@@ -4,7 +4,7 @@ from typing import Optional
 
 from ..ext.database import MongoDatabase
 from ..importer import Importer
-from ..provider import Provider
+from ..provider import Provider, RawProvider
 
 
 @dataclass(init=False)
@@ -16,7 +16,7 @@ class Blockchain:
     def get_importer(self) -> Optional[Importer]:
         return None
 
-    def get_provider(self) -> Provider:
+    def get_provider(self) -> RawProvider:
         raise NotImplementedError
 
     @asynccontextmanager
