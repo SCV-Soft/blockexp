@@ -97,7 +97,7 @@ class TransactionId:
 
 
 @dataclass
-class AddressBalance:
+class Balance:
     confirmed: int = 0
     unconfirmed: int = 0
     balance: int = 0

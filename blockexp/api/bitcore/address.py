@@ -6,7 +6,7 @@ from starlette.routing import Router
 
 from starlette_typed import typed_endpoint
 from . import ApiPath
-from ...model import AddressBalance, Coin
+from ...model import Balance, Coin
 from ...provider import Provider
 from ...provider.base import SteamingFindOptions
 
@@ -55,5 +55,5 @@ async def stream_address_utxos(request: Request, path: AddressApiPath, query: Ad
 
 @api.route('/{address}/balance', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def get_balance_for_address(request: Request, path: AddressApiPath, provider: Provider) -> AddressBalance:
+async def get_balance_for_address(request: Request, path: AddressApiPath, provider: Provider) -> Balance:
     return await provider.get_balance_for_address(path.address)
