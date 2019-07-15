@@ -24,9 +24,19 @@ def check_schema(cls: typing.Type):
     return cls
 
 
-def build_schema(cls: typing.Type, *, is_nested: bool = False, many=False) -> Schema:
+def build_schema(cls: typing.Type, *, is_nested: bool = False, many=None) -> Schema:
     # TODO: is_nested
-    return schema(cls, many=many)
+    if many is None:
+        origin = typing_inspect.get_origin(cls)
+        if origin is None:
+            pass
+        elif origin == list:
+            cls, = typing_inspect.get_args(cls)
+            many = True
+        else:
+            raise TypeError(cls)
+
+    return schema(cls, many=bool(many))
 
 
 def schema(cls: typing.Type, *, name=None, only=None, exclude=(), many=False, context=None,
