@@ -278,10 +278,8 @@ class BitcoinDaemonImporter(Importer):
                 spk: BtcScriptPubKey = vout.scriptPubKey
                 amount = value2amount(vout.value)
 
-                if vout.scriptPubKey.addresses:
-                    for address in vout.scriptPubKey.addresses:
-                        if address not in tx.wallets:
-                            tx.wallets.append(address)
+                addresses = vout.scriptPubKey.addresses or []
+                address = addresses[0] if addresses else None
 
                 mint_ops.append({
                     'mintTxid': tx.hash,
@@ -290,7 +288,9 @@ class BitcoinDaemonImporter(Importer):
                     'coinbase': is_coinbase,
                     'value': amount,
                     'script': spk.hex,
-                    'wallets': vout.scriptPubKey.addresses or [],
+                    'address': address,
+                    'addresses': addresses,
+                    'wallets': [],
                 })
 
         return mint_ops
