@@ -21,5 +21,5 @@ async def provider(request: Request) -> Provider:
             raise NotImplementedError((chain, network))
 
         # noinspection PyShadowingNames
-        async with blockchain.with_full_provider(database) as provider:
+        async with blockchain.get_full_provider(database) as provider:
             yield provider
