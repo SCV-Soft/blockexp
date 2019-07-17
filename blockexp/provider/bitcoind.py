@@ -353,7 +353,7 @@ class BitcoinMongoProvider(Provider):
                         query: dict,
                         find_options: SteamingFindOptions) -> List[dict]:
         if find_options.limit is None:
-            find_options.limit = 10
+            find_options.limit = 0
 
         query = query.copy()
 
