@@ -19,6 +19,5 @@ class Blockchain:
     def get_provider(self) -> RawProvider:
         raise NotImplementedError
 
-    @asynccontextmanager
-    async def with_full_provider(self, database: MongoDatabase) -> Provider:
+    def get_full_provider(self, database: MongoDatabase) -> Provider:
         raise NotImplementedError

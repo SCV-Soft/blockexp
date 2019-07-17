@@ -77,6 +77,7 @@ class MongoDatabase:
 
     async def __aenter__(self):
         self._session = await self.client.start_session()
+        return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         self._session.end_session()

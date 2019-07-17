@@ -37,8 +37,5 @@ class BitcoinBlockchain(Blockchain):
     def get_provider(self) -> BitcoinDaemonProvider:
         return BitcoinDaemonProvider(self.chain, self.network, self.url, auth=self.auth)
 
-    @asynccontextmanager
-    async def with_full_provider(self, database: MongoDatabase) -> Provider:
-        provider = BitcoinMongoProvider(self.chain, self.network, database, self.get_provider())
-        async with provider:
-            yield provider
+    def get_full_provider(self, database: MongoDatabase) -> Provider:
+        return BitcoinMongoProvider(self.chain, self.network, database, self.get_provider())
