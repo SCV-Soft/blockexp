@@ -429,8 +429,14 @@ class AsyncBitcoinDeamon(AsyncJsonRPC):
     async def sendmany(self, *args):
         return await self.call('sendmany', *args)
 
-    async def sendrawtransaction(self, *args):
-        return await self.call('sendrawtransaction', *args)
+    async def sendrawtransaction(self, hexstring: str, allowhighfees: bool = None) -> str:
+        """
+        Submits raw transaction (serialized, hex-encoded) to local node and network.
+        """
+        if allowhighfees is not None:
+            return await self.call('sendrawtransaction', hexstring, allowhighfees)
+        else:
+            return await self.call('sendrawtransaction', hexstring)
 
     async def sendtoaddress(self, *args):
         return await self.call('sendtoaddress', *args)
