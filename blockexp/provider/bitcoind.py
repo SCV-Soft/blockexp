@@ -315,8 +315,12 @@ class BitcoinMongoProvider(Provider):
 
         return transaction
 
-    def convert_raw_coin(self, raw_coin: dict) -> Coin:
-        return Coin(**raw_coin, chain=self.chain, network=self.network)
+    def convert_raw_coin(self, raw_coin: dict, tip: Block = None) -> Coin:
+        coin = Coin(**raw_coin, chain=self.chain, network=self.network)
+        if tip is not None:
+            coin.confirmations = tip.height - coin.mintHeight + 1
+
+        return coin
 
     def convert_raw_wallet(self, raw_wallet: dict) -> Wallet:
         return Wallet(**raw_wallet, chain=self.chain, network=self.network)
@@ -716,7 +720,9 @@ class BitcoinMongoProvider(Provider):
             'mintHeight': {'$gte': 0},
         })
 
-        return [self.convert_raw_coin(raw_coin)
+        tip = await self.get_local_tip()
+
+        return [self.convert_raw_coin(raw_coin, tip=tip)
                 async for raw_coin in raw_coins]
 
     async def get_wallet(self, pub_key: str) -> Wallet:
