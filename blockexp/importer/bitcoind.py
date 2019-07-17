@@ -217,34 +217,25 @@ class BitcoinDaemonImporter(Importer):
     async def write_block(self, raw_block: BtcBlock):
         block: Block = self.provider.convert_raw_block(raw_block)
 
-        async with bulk_write_for(self.block_collection, ordered=True) as db_ops:
+        async with bulk_write_for(self.block_collection, ordered=False) as db_ops:
             db_ops.append(UpdateOne(
-                filter={
-                    'hash': block.hash,
-                },
+                filter={'hash': block.hash},
                 update={
                     '$set': asrow(block),
                 },
                 upsert=True,
             ))
 
-            prev_raw_block: BtcBlock = (
-                await self.provider.get_raw_block(block.height - 1)
-                if block.height > 0
-                else None
-            )
-
-            if prev_raw_block is not None:
-                db_ops.append(UpdateOne(
-                    filter={
-                        'hash': prev_raw_block.hash,
-                    },
-                    update={
-                        '$set': {
-                            'nextBlockHash': block.hash,
-                        }
-                    },
-                ))
+            db_ops.append(UpdateOne(
+                filter={
+                    'hash': block.previousBlockHash,
+                },
+                update={
+                    '$set': {
+                        'nextBlockHash': block.hash,
+                    }
+                },
+            ))
 
     async def write_txs(self, raw_block: BtcBlock, txs: List[BtcTransaction]):
         async with bulk_write_for(self.tx_collection, ordered=False) as db_ops:
