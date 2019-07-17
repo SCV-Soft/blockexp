@@ -228,8 +228,8 @@ class BitcoinDaemonProvider(RawProvider):
                 raise ValueError
         else:
             block = await self.rpc.getblock(block_hash, verbosity=verbosity)
-            if block['tx'] and isinstance(block['tx'][0], dict):
-                block['tx'] = [self._convert_raw_block(tx) for tx in block['tx']]
+            if 'tx' in block and block['tx'] and isinstance(block['tx'][0], dict):
+                block['tx'] = [self._convert_raw_transaction(tx) for tx in block['tx']]
 
         assert isinstance(block, dict)
         return self._convert_raw_block(block)
