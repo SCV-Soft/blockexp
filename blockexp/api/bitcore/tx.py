@@ -6,7 +6,7 @@ from starlette.routing import Router
 
 from starlette_typed import typed_endpoint
 from . import ApiPath
-from ...model import Transaction, CoinListing, Authhead
+from ...model import Transaction, CoinListing, Authhead, TransactionId
 from ...provider import Provider
 from ...provider.base import SteamingFindOptions, Direction
 
@@ -62,7 +62,15 @@ async def get_coins_for_tx(request: Request, path: TransactionApiPath, provider:
     return await provider.get_coins_for_tx(path.tx_id)
 
 
+@dataclass
+class BroadcastTransactionRequest:
+    chain: str
+    network: str
+    rawTx: str
+
+
 @api.route('/send', methods=['POST'])
 @typed_endpoint(tags=["bitcore"])
-async def broadcast_transaction(request: Request, path: ApiPath, provider: Provider) -> str:
-    raise NotImplementedError
+async def broadcast_transaction(request: Request, path: ApiPath, provider: Provider,
+                                body: BroadcastTransactionRequest) -> TransactionId:
+    return await provider.broadcast_transaction(body.rawTx)
