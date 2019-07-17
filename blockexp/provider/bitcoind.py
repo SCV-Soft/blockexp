@@ -624,7 +624,7 @@ class BitcoinMongoProvider(Provider):
                 filter={'address': {'$in': addresses}},
                 projection={'mintTxid': True, 'spentTxid': True}
         ):
-            for txid in item['mintTxid'], item['spentTxid']:
+            for txid in item.get('mintTxid', None), item.get('spentTxid', None):
                 if txid is not None:
                     txids.add(txid)
 
