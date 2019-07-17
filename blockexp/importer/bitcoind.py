@@ -275,7 +275,7 @@ class BitcoinDaemonImporter(Importer):
                 address = addresses[0] if addresses else None
 
                 mint_ops.append({
-                    'mintTxid': tx.hash,
+                    'mintTxid': tx.txid,
                     'mintIndex': idx,
                     'mintHeight': height,
                     'coinbase': is_coinbase,
@@ -335,7 +335,7 @@ class BitcoinDaemonImporter(Importer):
                     continue
 
                 spend_ops.append({
-                    'mintTxid': raw_tx.hash,
+                    'mintTxid': raw_tx.txid,
                     'mintIndex': vin.vout,
                     'spentTxid': vin.txid,
                     'spentHeight': height,
