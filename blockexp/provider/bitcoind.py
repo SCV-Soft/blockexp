@@ -298,6 +298,10 @@ class BitcoinMongoProvider(Provider):
         self.database = database
         self.provider = provider
 
+    @property
+    def rpc(self) -> AsyncBitcoinDeamon:
+        return self.provider.rpc
+
     def convert_raw_block(self, raw_block: dict, tip: Block = None) -> Block:
         block = Block(**raw_block, chain=self.chain, network=self.network)
         if tip is not None:
