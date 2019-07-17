@@ -729,8 +729,9 @@ class BitcoinMongoProvider(Provider):
     async def get_fee(self, target: int) -> EstimateFee:
         return await self.provider.get_fee(target)
 
-    async def broadcast_transaction(self, raw_tx: Any) -> TransactionId:
-        raise NotImplementedError
+    async def broadcast_transaction(self, raw_tx: str) -> TransactionId:
+        txid = await self.rpc.sendrawtransaction(raw_tx)
+        return TransactionId(txid)
 
     async def get_coins_for_tx(self, tx_id: str) -> CoinListing:
         inputs = self.coin_collection.find({'spentTxid': tx_id})
