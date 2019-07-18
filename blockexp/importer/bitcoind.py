@@ -89,7 +89,6 @@ class BitcoinDaemonImporter(Importer):
         await self.block_collection.create_index(index(previousBlockHash=1), background=True)
 
         # coins
-        await self.coin_collection.create_index(index(address=1), background=True)
         await self.coin_collection.create_index(index(mintHeight=1), background=True)
         await self.coin_collection.create_index(index(spentTxid=1), background=True)
         await self.coin_collection.create_index(index(spentHeight=1), background=True)
@@ -98,6 +97,7 @@ class BitcoinDaemonImporter(Importer):
         await self.coin_collection.create_index(index(wallets=1, spentHeight=1, value=1, mintHeight=1), background=True)
         await self.coin_collection.create_index(index(wallets=1, spentTxid=1), background=True)
         await self.coin_collection.create_index(index(wallets=1, mintTxid=1), background=True)
+        await self.coin_collection.create_index(index(addresses=1), background=True)
 
         # transactions
         await self.tx_collection.create_index(index(txid=1), background=True)
@@ -106,6 +106,7 @@ class BitcoinDaemonImporter(Importer):
         await self.tx_collection.create_index(index(blockTimeNormalized=1), background=True)
         await self.tx_collection.create_index(index(wallets=1, blockTimeNormalized=1), background=True)
         await self.tx_collection.create_index(index(wallets=1, blockHeight=1), background=True)
+        await self.tx_collection.create_index(index(addresses=1), background=True)
 
         # wallets
         await self.wallet_collection.create_index(index(pubKey=1), background=True)
