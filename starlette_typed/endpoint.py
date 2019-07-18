@@ -5,11 +5,13 @@ import typing
 from asyncio import iscoroutinefunction
 from collections import defaultdict
 from dataclasses import dataclass, field, is_dataclass
+from http import HTTPStatus
 from inspect import Parameter
 from traceback import TracebackException
 from typing import Any, Tuple, Optional, Callable, Type, Dict, TypeVar, Set, List, get_type_hints, cast
 
 import typing_inspect
+from datetime import datetime, timedelta
 from requests import Request
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
@@ -67,6 +69,22 @@ def get_description(view_func: Callable) -> Optional[Description]:
         return None
     else:
         return cast(Description, description)
+
+
+def cache_endpoint(*, ttl: int):
+    def wrapper(func):
+        @functools.wraps(func)
+        async def handle_cache(request: Request) -> Response:
+            response: Response = await func(request)
+            if response.status_code == HTTPStatus.OK:
+                expires = datetime.utcnow() + timedelta(seconds=ttl)
+                response.headers['Expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S GMT")
+
+            return response
+
+        return handle_cache
+
+    return wrapper
 
 
 def typed_endpoint(*, tags: Set[str] = None):
