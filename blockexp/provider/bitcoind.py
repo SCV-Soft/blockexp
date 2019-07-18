@@ -73,6 +73,8 @@ class BtcTransaction:
     confirmations: int = None
     time: int = None
     blocktime: int = None
+    address: str = None
+    addresses: List[str] = field(default_factory=list)
     wallets: List[str] = field(default_factory=list)
 
     def is_coinbase(self) -> bool:
@@ -176,6 +178,8 @@ class BitcoinDaemonProvider(RawProvider):
             outputCount=len(transaction.vout),
             value=sum(item.value for item in transaction.vout),
             confirmations=transaction.confirmations,
+            address=transaction.address,
+            addresses=transaction.addresses,
             wallets=transaction.wallets,
         )
 
