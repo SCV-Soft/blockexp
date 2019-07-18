@@ -341,7 +341,6 @@ class BitcoinDaemonImporter(Importer):
                     filter={
                         'mintTxid': spend_op['mintTxid'],
                         'mintIndex': spend_op['mintIndex'],
-                        'spentHeight': {'$lt': '0'},
                     },
                     update={
                         '$set': {
