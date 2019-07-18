@@ -406,8 +406,10 @@ class BitcoinMongoProvider(Provider):
         if unspent:
             query['spentHeight'] = {'$lt': 0}
 
+        tip = await self.get_local_tip()
         raw_coins = await self.streaming(self.coin_collection, query, find_options)
-        return [self.convert_raw_coin(raw_coin) for raw_coin in raw_coins]
+        return [self.convert_raw_coin(raw_coin, tip=tip)
+                for raw_coin in raw_coins]
 
     async def _get_balance_in_cursor(self, raw_coins) -> Balance:
         confirmed = 0
