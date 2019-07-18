@@ -5,7 +5,7 @@ from aiocache import cached
 from starlette.requests import Request
 from starlette.routing import Router
 
-from starlette_typed import typed_endpoint
+from starlette_typed import typed_endpoint, cache_endpoint
 from . import ApiPath
 from ...model import Block
 from ...provider import Provider
@@ -49,6 +49,7 @@ async def get_cached_local_tip(provider: Provider):
 
 
 @api.route('/tip', methods=['GET'])
+@cache_endpoint(ttl=5)
 @typed_endpoint(tags=["bitcore"])
 async def get_tip(request: Request, path: ApiPath, provider: Provider) -> Block:
     return await get_cached_local_tip(provider)
