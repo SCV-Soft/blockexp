@@ -265,6 +265,13 @@ class BitcoinDaemonImporter(Importer):
                 addresses = vout.scriptPubKey.addresses or []
                 address = addresses[0] if addresses else None
 
+                for address in addresses:
+                    if address not in tx.addresses:
+                        tx.addresses.append(address)
+
+                if tx.address is None:
+                    tx.address = address
+
                 mint_ops.append({
                     'mintTxid': tx.txid,
                     'mintIndex': idx,
