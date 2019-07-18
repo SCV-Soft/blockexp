@@ -321,14 +321,14 @@ class BitcoinDaemonImporter(Importer):
 
                 same_block_spend = mint_map.get(vin.txid, {}).get(vin.vout)
                 if same_block_spend is not None:
+                    same_block_spend['spentTxid'] = raw_tx.txid
                     same_block_spend['spentHeight'] = height
-                    same_block_spend['spentTxid'] = vin.txid
                     continue
 
                 spend_ops.append({
-                    'mintTxid': raw_tx.txid,
+                    'mintTxid': vin.txid,
                     'mintIndex': vin.vout,
-                    'spentTxid': vin.txid,
+                    'spentTxid': raw_tx.txid,
                     'spentHeight': height,
                 })
 
