@@ -50,25 +50,16 @@ async def create_wallet(request: Request, path: ApiPath, body: CreateWalletApiBo
 @register_handler
 @asynccontextmanager
 async def wallet(request: Request) -> Wallet:
-    provider = request.scope['provider']
-    path = request.scope['path']
-    query_string = request.scope['query_string']
-    pub_key = request.path_params['pub_key']
+    provider: Provider = request.scope['provider']
+    pub_key: str = request.path_params['pub_key']
 
     # noinspection PyShadowingNames
     wallet = await provider.get_wallet(pub_key)
-    if True:
-        # TODO: remove bypass vaildate
-        yield wallet
-        return
 
-    # request['path']
-
-    # noinspection PyUnreachableCode
     message = '|'.join([
         request.method,
-        path if not query_string else f'{path}?{query_string}',
-        json.dumps(await request.json()),
+        request.url.path if not request.url.query else f'{request.url.path}?{request.url.query}',
+        (await request.body()).decode('utf-8', errors='replace') or '{}',
     ]).encode('utf-8')
 
     message_hash = double_sha256(message)
