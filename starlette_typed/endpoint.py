@@ -4,6 +4,7 @@ import sys
 import typing
 from asyncio import iscoroutinefunction
 from collections import defaultdict
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field, is_dataclass
 from http import HTTPStatus
 from inspect import Parameter
@@ -199,28 +200,47 @@ def build_new_view_func(view_func: Callable, description: Description):
     @functools.wraps(view_func)
     async def view_func(request: Request):
         try:
-            kwargs, context = await parse_request(request, description)
+            kwargs = await parse_request(request, description)
+            async with with_fixtures(request, description) as fixtures:
+                kwargs.update(fixtures)
 
-            try:
-                response = await func(request, **kwargs)
-            finally:
-                exc_info = sys.exc_info()
-                for ctx in context.values():
-                    await ctx.__aexit__(*exc_info)
-
-            return build_response(response, description)
+                raw_response = await func(request, **kwargs)
+                response = build_response(raw_response, description)
         except HTTPException:
             raise
         except Exception as exc:
-            return build_error(request, exc)
+            response = build_error(request, exc)
+
+        return response
 
     description.view_func = view_func
     return view_func
 
 
-async def parse_request(request: Request, description: Description) -> Tuple[dict, dict]:
-    result = {}
+@asynccontextmanager
+async def with_fixtures(request: Request, description: Description) -> Dict[str, Any]:
     context = {}
+    fixtures = {}
+
+    try:
+        for name, handler in description.extras.items():
+            ctx = handler(request)
+            fixture = await ctx.__aenter__()
+
+            context[name] = ctx
+            fixtures[name] = fixture
+
+            request.scope[name] = fixture
+
+        yield fixtures
+    finally:
+        exc_info = sys.exc_info()
+        for ctx in context.values():
+            await ctx.__aexit__(*exc_info)
+
+
+async def parse_request(request: Request, description: Description) -> dict:
+    result = {}
 
     if description.input_headers is not None:
         result['headers'] = description.input_headers.load(dict(request.headers.items()))
@@ -237,11 +257,7 @@ async def parse_request(request: Request, description: Description) -> Tuple[dic
     if description.input_body is not None:
         result['body'] = description.input_body.load(await request.json())
 
-    for name, handler in description.extras.items():
-        context[name] = ctx = handler(request)
-        request.scope[name] = result[name] = await ctx.__aenter__()
-
-    return result, context
+    return result
 
 
 def build_response(result: Any, description: Description) -> Response:
