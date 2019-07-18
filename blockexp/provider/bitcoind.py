@@ -389,12 +389,12 @@ class BitcoinMongoProvider(Provider):
                                           address: str,
                                           unspent: bool,
                                           find_options: SteamingFindOptions) -> List[Transaction]:
-        query = {'wallets': address}
+        query = {'addresses': address}
         if unspent is not None:
             if unspent:
-                query['spentHeight'] = {'$gte': 0}
-            else:
                 query['spentHeight'] = {'$lt': 0}
+            else:
+                query['spentHeight'] = {'$gte': 0}
 
         tip = await self.get_local_tip()
         raw_transactions = await self.streaming(self.tx_collection, query, find_options)
@@ -402,9 +402,12 @@ class BitcoinMongoProvider(Provider):
                 for raw_transaction in raw_transactions]
 
     async def stream_address_utxos(self, address: str, unspent: bool, find_options: SteamingFindOptions) -> List[Any]:
-        query = {'wallets': address}
-        if unspent:
-            query['spentHeight'] = {'$lt': 0}
+        query = {'addresses': address}
+        if unspent is not None:
+            if unspent:
+                query['spentHeight'] = {'$lt': 0}
+            else:
+                query['spentHeight'] = {'$gte': 0}
 
         tip = await self.get_local_tip()
         raw_coins = await self.streaming(self.coin_collection, query, find_options)
