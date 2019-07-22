@@ -1,3 +1,4 @@
+import asyncio
 from http import HTTPStatus
 from json import JSONDecodeError
 from typing import Any, Tuple, Optional
@@ -76,7 +77,7 @@ class AsyncJsonRPC:
     async def call(self, method, *params) -> Any:
         response: Optional[Response] = None
 
-        for repeat in range(3):
+        for repeat in range(5):
             try:
                 response = await self.session.post(
                     self.url,
@@ -84,9 +85,10 @@ class AsyncJsonRPC:
                     auth=self.auth,
                 )
             except (RemoteProtocolError, RequestsConnectionError):
-                if repeat >= 2:
+                if repeat >= 4:
                     raise
 
+                await asyncio.sleep(0.5)
                 continue
             else:
                 break
