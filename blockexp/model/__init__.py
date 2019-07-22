@@ -43,10 +43,10 @@ class Coin:
     network: str
     mintTxid: str
     mintIndex: int
-    mintHeight: int
-    coinbase: bool
-    value: int
-    script: str
+    mintHeight: int = -1
+    coinbase: bool = False
+    value: int = None
+    script: str = None
     address: str = None
     addresses: List[str] = field(default_factory=list)
     spentTxid: str = None
