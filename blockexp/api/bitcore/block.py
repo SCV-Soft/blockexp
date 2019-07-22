@@ -8,8 +8,8 @@ from starlette.routing import Router
 from starlette_typed import typed_endpoint, cache_endpoint
 from . import ApiPath
 from ...model import Block
-from ...provider import Provider
-from ...provider.base import SteamingFindOptions, Direction
+from ...model.options import Direction, SteamingFindOptions
+from ...types import Provider
 
 api = Router()
 

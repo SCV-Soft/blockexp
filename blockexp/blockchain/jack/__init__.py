@@ -1,6 +1,5 @@
-from .btc import BitcoinBlockchain
-
-from ..provider.bitcoind import JackDaemonProvider
+from .provider import JackDaemonProvider
+from ..btc import BitcoinBlockchain
 
 
 class JackBlockchain(BitcoinBlockchain):

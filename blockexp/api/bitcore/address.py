@@ -7,8 +7,8 @@ from starlette.routing import Router
 from starlette_typed import typed_endpoint
 from . import ApiPath
 from ...model import Balance, Coin
-from ...provider import Provider
-from ...provider.base import SteamingFindOptions
+from ...model.options import SteamingFindOptions
+from ...types import Provider
 
 api = Router()
 

@@ -6,7 +6,7 @@ from starlette.routing import Router
 from starlette_typed import typed_endpoint
 from . import ApiPath
 from ...model import EstimateFee
-from ...provider import Provider
+from ...types import Provider
 
 api = Router()
 

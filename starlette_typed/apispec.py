@@ -11,7 +11,7 @@ from marshmallow import fields
 from marshmallow.fields import Field
 from starlette.responses import PlainTextResponse, JSONResponse
 
-from starlette_typed.marshmallow import parse_type
+from .marshmallow import parse_type
 from .endpoint import get_description
 
 CONTENT_TEXT = PlainTextResponse.media_type
