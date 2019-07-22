@@ -236,8 +236,6 @@ if TYPE_CHECKING:
     MongoCursor = Union[MongoCollection, AgnosticCursor]
 
 
-
-
 class DatabasePool:
     def __init__(self, url: DatabaseURL, *, max_size=-1):
         self.url = url

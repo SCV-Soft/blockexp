@@ -1,7 +1,8 @@
 from dataclasses import dataclass, is_dataclass, field
 from datetime import datetime
-from typing import List, Optional, Type
+from typing import List, Optional, Type, Any
 
+from .blockexp.utils import check_schemas
 from starlette_typed.marshmallow import check_schema, Schema, build_schema
 
 SCHEMAS = {}
@@ -138,6 +139,11 @@ class WalletCheckResult:
     sum: int
 
 
-for cls in list(globals().values()):
-    if is_dataclass(cls):
-        check_schema(cls)
+@dataclass
+class DailyTransactions:
+    chain: str
+    network: str
+    results: List[Any]
+
+
+check_schemas(globals())

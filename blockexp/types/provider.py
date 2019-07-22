@@ -1,32 +1,13 @@
 from dataclasses import dataclass
-from enum import IntEnum, Enum
+from enum import Enum
 from typing import Union, Any, TypeVar, List, Optional
 
 from ..model import Block, Transaction, CoinListing, Authhead, TransactionId, Balance, EstimateFee, Wallet, Coin, \
     WalletAddress
+from ..model import DailyTransactions
+from ..model.options import SteamingFindOptions
 
 T = TypeVar('T')
-
-
-class Direction(IntEnum):
-    ASCENDING = 1
-    DESCENDING = -1
-
-
-@dataclass
-class SteamingFindOptions:
-    paging: str = None
-    since: int = None
-    sort: Any = None
-    direction: Direction = None
-    limit: int = None
-
-
-@dataclass
-class DailyTransactions:
-    chain: str
-    network: str
-    results: List[Any]
 
 
 class ProviderType(Enum):

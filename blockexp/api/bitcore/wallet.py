@@ -1,5 +1,4 @@
 import base64
-import json
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import List
@@ -13,10 +12,9 @@ from starlette.routing import Router
 from starlette_typed import typed_endpoint
 from starlette_typed.endpoint import register_handler
 from . import ApiPath
-from ...model import Balance, Transaction, WalletCheckResult
-from ...model import Wallet, Coin
-from ...provider import Provider
-from ...provider.base import SteamingFindOptions
+from ...model import Wallet, Coin, Balance, Transaction, WalletCheckResult
+from ...model.options import SteamingFindOptions
+from ...types import Provider
 
 api = Router()
 

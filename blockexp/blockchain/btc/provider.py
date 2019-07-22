@@ -1,124 +1,19 @@
-from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Union, Any, List, Optional
 
 from pymongo import DESCENDING, ASCENDING, InsertOne, UpdateMany, UpdateOne
 from requests.auth import HTTPBasicAuth
 
-from .base import Provider, ProviderType, SteamingFindOptions, DailyTransactions, Direction, RawProvider
-from ..error import BlockNotFound, TransactionNotFound, WalletNotFound
-from ..ext.database import MongoDatabase, MongoCollection, bulk_write_for
-from ..model import Block, Transaction, EstimateFee, TransactionId, CoinListing, Authhead, Balance, Coin, Wallet, \
-    WalletAddress, WalletCheckResult
-from ..proxy.bitcoind import AsyncBitcoinDeamon
-from ..proxy.jsonrpc import JSONRPCError
-from ..utils import asrow
-
-
-@dataclass
-class BtcVInCoinbase:
-    coinbase: str
-    sequence: int
-
-
-@dataclass
-class BtcScriptSig:
-    asm: str
-    hex: str
-
-
-@dataclass
-class BtcVIn:
-    txid: str
-    vout: int
-    scriptSig: BtcScriptSig
-    sequence: int
-    txinwitness: List[str] = None
-
-
-@dataclass
-class BtcScriptPubKey:
-    type: str
-    asm: str
-    hex: str
-    reqSigs: int = None
-    addresses: List[str] = None
-
-
-@dataclass
-class BtcVOut:
-    value: float
-    n: int
-    scriptPubKey: Union[dict, BtcScriptPubKey]
-
-    def __post_init__(self):
-        if not isinstance(self.scriptPubKey, BtcScriptPubKey):
-            self.scriptPubKey = BtcScriptPubKey(**self.scriptPubKey)
-
-
-# noinspection SpellCheckingInspection
-@dataclass
-class BtcTransaction:
-    txid: str
-    hash: str
-    version: int
-    size: int
-    vsize: int
-    weight: int
-    locktime: int
-    vin: List[Union[dict, BtcVIn, BtcVInCoinbase]]
-    vout: List[Union[dict, BtcVOut]]
-    hex: str
-    blockhash: str = None
-    confirmations: int = None
-    time: int = None
-    blocktime: int = None
-    address: str = None
-    addresses: List[str] = field(default_factory=list)
-    wallets: List[str] = field(default_factory=list)
-
-    def is_coinbase(self) -> bool:
-        return isinstance(self.vin[0], BtcVInCoinbase) if self.vin else False
-
-    def __post_init__(self):
-        if self.vin and not isinstance(self.vin[0], (BtcVIn, BtcVInCoinbase)):
-            item = self.vin[0]
-            if 'coinbase' in item:
-                assert len(self.vin) == 1
-                self.vin = [BtcVInCoinbase(**item) for item in self.vin]
-            else:
-                self.vin = [BtcVIn(**item) for item in self.vin]
-
-        if self.vout and not isinstance(self.vout[0], BtcVOut):
-            self.vout = [BtcVOut(**item) for item in self.vout]
-
-
-# noinspection SpellCheckingInspection
-@dataclass
-class BtcBlock:
-    hash: str  # (string) the block hash (same as provided)
-    confirmations: int  # (numeric) The number of confirmations, or -1 if the block is not on the main chain
-    size: int  # (numeric) The block size
-    strippedsize: int  # (numeric) The block size excluding witness data
-    weight: int  # (numeric) The block weight as defined in BIP 141
-    height: int  # (numeric) The block height or index
-    version: int  # (numeric) The block version
-    versionHex: str  # (string) The block version formatted in hexadecimal
-    merkleroot: str  # (string) The merkle root
-    tx: List[Union[str, dict, BtcTransaction]]  # (array of string) The transaction ids
-    time: int  # (numeric) The block time in seconds since epoch (Jan 1 1970 GMT)
-    mediantime: int  # (numeric) The median block time in seconds since epoch (Jan 1 1970 GMT)
-    nonce: int  # (numeric) The nonce
-    bits: str  # (string) The bits
-    difficulty: float  # (numeric) The difficulty
-    chainwork: str  # (string) Expected number of hashes required to produce the chain up to this block (in hex)
-    nTx: int  # (numeric) The number of transactions in the block.
-    previousblockhash: str = None  # (string) The hash of the previous block
-    nextblockhash: str = None  # (string) The hash of the next block
-
-    def __post_init__(self):
-        if self.tx and isinstance(self.tx[0], dict):
-            self.tx = [BtcTransaction(**item) for item in self.tx]
+from .bitcoind import AsyncBitcoinDeamon
+from .types import BtcTransaction, BtcBlock
+from ...error import BlockNotFound, TransactionNotFound, WalletNotFound
+from ...ext.database import MongoDatabase, MongoCollection, bulk_write_for
+from ...model import Block, Transaction, EstimateFee, TransactionId, CoinListing, Authhead, Balance, Coin, Wallet, \
+    WalletAddress, WalletCheckResult, DailyTransactions
+from ...model.options import Direction, SteamingFindOptions
+from ...types import Provider, ProviderType, RawProvider
+from ...utils import asrow
+from ...utils.jsonrpc import JSONRPCError
 
 
 class BitcoinDaemonProvider(RawProvider):
@@ -274,26 +169,6 @@ class BitcoinDaemonProvider(RawProvider):
 
     async def get_fee(self, target: int) -> EstimateFee:
         return EstimateFee(**(await self.rpc.estimatesmartfee(target)))
-
-
-class JackDaemonProvider(BitcoinDaemonProvider):
-    def _convert_raw_transaction(self, transaction: dict) -> BtcTransaction:
-        transaction['hash'] = transaction['txid']
-        transaction['vsize'] = transaction['size']
-        transaction['weight'] = -1
-        return BtcTransaction(**transaction)
-
-    def _convert_raw_block(self, block: dict) -> BtcBlock:
-        del block['acc_checkpoint']
-        del block['modifier']
-        del block['moneysupply']
-        del block['zJACKsupply']
-        block['strippedsize'] = block['size']
-        block['weight'] = -1
-        block['versionHex'] = '-'
-        block['nTx'] = len(block['tx'])
-
-        return BtcBlock(**block)
 
 
 class BitcoinMongoProvider(Provider):

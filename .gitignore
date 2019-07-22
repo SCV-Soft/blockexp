@@ -125,4 +125,4 @@ dmypy.json
 
 # Ignore eth/web3 until fully stable
 *eth.*
-*web3.*
+eth/

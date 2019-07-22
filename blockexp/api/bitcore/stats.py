@@ -3,8 +3,8 @@ from starlette.routing import Router
 
 from starlette_typed import typed_endpoint
 from . import ApiPath
-from ...provider import Provider
-from ...provider.base import DailyTransactions
+from ...model import DailyTransactions
+from ...types import Provider
 
 api = Router()
 

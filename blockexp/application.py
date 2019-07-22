@@ -1,10 +1,8 @@
 from typing import Any
 
-import uvicorn
-from requests import Request
-from starlette.applications import Starlette
-from starlette.responses import Response
 import socketio
+import uvicorn
+from starlette.applications import Starlette
 
 from .service import Service
 

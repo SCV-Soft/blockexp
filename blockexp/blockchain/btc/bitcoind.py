@@ -1,6 +1,6 @@
 from typing import Union, List
 
-from .jsonrpc import AsyncJsonRPC
+from ...utils.jsonrpc import AsyncJsonRPC
 
 
 # https://github.com/bitcoin/bitcoin/blob/master/test/functional/test_framework/authproxy.py

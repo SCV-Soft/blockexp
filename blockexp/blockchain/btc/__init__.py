@@ -1,15 +1,13 @@
-from contextlib import asynccontextmanager
 from typing import Optional, Tuple
 from urllib.parse import urlparse, ParseResult
 
 from requests.auth import HTTPBasicAuth
 
-from .base import Blockchain
-from ..application import Application
-from ..ext.database import MongoDatabase
-from ..importer.bitcoind import BitcoinDaemonImporter
-from ..provider import Provider
-from ..provider.bitcoind import BitcoinDaemonProvider, BitcoinMongoProvider
+from .importer import BitcoinDaemonImporter
+from .provider import BitcoinDaemonProvider, BitcoinMongoProvider
+from ...application import Application
+from ...ext.database import MongoDatabase
+from ...types import Blockchain, Provider
 
 
 def parse_url(url: str) -> Tuple[str, Optional[HTTPBasicAuth]]:

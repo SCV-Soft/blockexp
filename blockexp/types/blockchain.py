@@ -1,10 +1,9 @@
-from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Optional
 
+from .importer import Importer
+from .provider import Provider, RawProvider
 from ..ext.database import MongoDatabase
-from ..importer import Importer
-from ..provider import Provider, RawProvider
 
 
 @dataclass(init=False)

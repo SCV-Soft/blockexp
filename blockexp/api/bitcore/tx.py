@@ -7,8 +7,8 @@ from starlette.routing import Router
 from starlette_typed import typed_endpoint
 from . import ApiPath
 from ...model import Transaction, CoinListing, Authhead, TransactionId
-from ...provider import Provider
-from ...provider.base import SteamingFindOptions, Direction
+from ...model.options import Direction, SteamingFindOptions
+from ...types import Provider
 
 api = Router()
 
@@ -30,14 +30,16 @@ class TxIndexApiQuery:
 
 @api.route('/', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def stream_transactions(request: Request, path: ApiPath, query: TxIndexApiQuery, provider: Provider) -> List[
-    Transaction]:
+async def stream_transactions(request: Request,
+                              path: ApiPath,
+                              query: TxIndexApiQuery,
+                              provider: Provider) -> List[Transaction]:
     return await provider.stream_transactions(
         block_height=query.blockHeight,
         block_hash=query.blockHash,
         find_options=SteamingFindOptions(
             limit=query.limit,
-            since=query.since,
+            since=int(query.since) if query.since is not None else None,
             direction=query.direction,
             paging=query.paging,
         )
