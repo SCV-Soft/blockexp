@@ -60,9 +60,9 @@ def init_app(app: Application) -> dict:
             elif chain == "JACK":
                 blockchain = JackBlockchain(chain, network, app, url)
             elif chain == "ETH":
-                raise NotImplementedError
+                raise NotImplementedError(chain)
             else:
-                continue
+                raise NotImplementedError(chain)
 
             blockchain_pool[chain, network] = blockchain
 
