@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Union, List, Any, cast, Type, TypeVar
 
 import typing_inspect
@@ -6,8 +7,8 @@ from requests_async import Response
 from starlette.exceptions import HTTPException
 
 from .base import Provider, ProviderType
-from ..model import get_schema, Block, Transaction, CoinListing, Authhead, TransactionId, AddressBalance, Coin, \
-    EstimateFee
+from ..model import get_schema, Block, Transaction, CoinListing, Authhead, Balance, Coin, \
+    EstimateFee, Wallet, WalletAddress, TransactionId
 from ..provider.base import SteamingFindOptions
 from ..proxy.bitcore import AsyncBitcore
 
@@ -83,8 +84,8 @@ class BitcoreProvider(Provider):
             'since': find_options.since,
         })
 
-    async def get_balance_for_address(self, address: str) -> AddressBalance:
-        return await self._get(AddressBalance, f'address/{address}/balance')
+    async def get_balance_for_address(self, address: str) -> Balance:
+        return await self._get(Balance, f'address/{address}/balance')
 
     async def stream_blocks(self,
                             since_block: Union[str, int] = None,
@@ -133,34 +134,6 @@ class BitcoreProvider(Provider):
             'path': path,
         })
 
-    async def wallet_check(self):
-        # TODO: wallet auth
-        raise NotImplementedError
-
-    async def stream_missing_wallet_addresses(self):
-        # TODO: wallet auth
-        raise NotImplementedError
-
-    async def update_wallet(self):
-        # TODO: wallet auth
-        raise NotImplementedError
-
-    async def stream_wallet_transactions(self):
-        # TODO: wallet auth
-        raise NotImplementedError
-
-    async def get_wallet_balance(self):
-        # TODO: wallet auth
-        raise NotImplementedError
-
-    async def get_wallet_balance_at_time(self):
-        # TODO: wallet auth
-        raise NotImplementedError
-
-    async def stream_wallet_utxos(self):
-        # TODO: wallet auth
-        raise NotImplementedError
-
     async def get_fee(self, target: int) -> EstimateFee:
         return await self._get(EstimateFee, f'fee/{target}')
 
@@ -181,3 +154,39 @@ class BitcoreProvider(Provider):
     async def get_locator_hashes(self):
         # missing api endpoint
         raise NotImplementedError
+
+    async def wallet_check(self, wallet: Wallet):
+        return await self._get(Block, f'block/tip')
+
+    async def stream_missing_wallet_addresses(self, wallet: Wallet) -> List[str]:
+        pass
+
+    async def stream_wallet_addresses(self, wallet: Wallet, limit: int) -> List[WalletAddress]:
+        pass
+
+    async def update_wallet(self, wallet: Wallet, addresses: List[str]):
+        pass
+
+    async def stream_wallet_transactions(self, wallet: Wallet, start_block: int = None, end_block: int = None,
+                                         start_date: str = None, end_date: str = None, *,
+                                         find_options: SteamingFindOptions) -> List[Transaction]:
+        pass
+
+    async def get_wallet_balance(self, wallet: Wallet) -> Balance:
+        pass
+
+    async def get_wallet_balance_at_time(self, wallet: Wallet, time: str) -> Balance:
+        pass
+
+    async def stream_wallet_utxos(self, wallet: Wallet, limit: int = None, include_spent: bool = False) -> List[Coin]:
+        pass
+
+    async def get_wallet(self, pub_key: str) -> Wallet:
+        return Wallet(
+            chain=self.chain,
+            network=self.network,
+            name=pub_key,
+            pubKey=pub_key,
+            singleAddress=None,
+            path=None,
+        )
