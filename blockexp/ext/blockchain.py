@@ -4,6 +4,7 @@ from typing import Iterator, Optional, Dict
 from ..application import Application
 from ..blockchain.btc import BitcoinBlockchain
 from ..blockchain.jack import JackBlockchain
+from ..blockchain.pch import PchBlockchain
 from ..service import Service
 from ..types import Blockchain
 
@@ -59,6 +60,8 @@ def init_app(app: Application) -> dict:
                 blockchain = BitcoinBlockchain(chain, network, app, url)
             elif chain == "JACK":
                 blockchain = JackBlockchain(chain, network, app, url)
+            elif chain == "PCH":
+                blockchain = PchBlockchain(chain, network, app, url)
             elif chain == "ETH":
                 raise NotImplementedError(chain)
             else:
