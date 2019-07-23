@@ -52,7 +52,7 @@ class BitcoinDaemonProvider(RawProvider):
             transactionCount=len(block.tx),  # block.transactionCount
             size=block.size,
             bits=int(block.bits, 16),
-            reward=-1,  # block.reward,
+            reward=None,
             processed=None,
         )
 
