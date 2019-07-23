@@ -33,7 +33,7 @@ class Block:
     transactionCount: int
     size: int
     bits: int
-    reward: int
+    reward: Optional[int] = None
     processed: Optional[bool] = None
     _id: str = None
 
