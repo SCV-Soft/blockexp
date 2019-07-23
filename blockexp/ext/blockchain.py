@@ -2,7 +2,7 @@ import asyncio
 from typing import Iterator, Optional, Dict
 
 from ..application import Application
-from ..blockchain.btc.__init__ import BitcoinBlockchain
+from ..blockchain.btc import BitcoinBlockchain
 from ..blockchain.jack import JackBlockchain
 from ..service import Service
 from ..types import Blockchain
