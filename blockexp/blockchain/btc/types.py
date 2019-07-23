@@ -106,6 +106,3 @@ class BtcBlock:
     def __post_init__(self):
         if self.tx and isinstance(self.tx[0], dict):
             self.tx = [BtcTransaction(**item) for item in self.tx]
-
-
-check_schemas(globals())
