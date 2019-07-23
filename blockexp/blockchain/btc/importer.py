@@ -242,13 +242,15 @@ class BitcoinDaemonImporter(Importer):
         async with bulk_write_for(self.tx_collection, ordered=False) as db_ops:
             for raw_tx in txs:
                 tx = self.provider.convert_raw_transaction(raw_tx, raw_block)
+                row = asrow(tx)
+                row['value'] = value2amount(tx.value)
 
                 db_ops.append(UpdateOne(
                     filter={
                         'txid': tx.txid,
                     },
                     update={
-                        '$set': asrow(tx),
+                        '$set': row,
                     },
                     upsert=True,
                 ))
