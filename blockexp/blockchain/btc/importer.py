@@ -215,14 +215,28 @@ class BitcoinDaemonImporter(Importer):
         await self.write_txs(raw_block, raw_block.tx)
         await self.write_block(raw_block)
 
+    @staticmethod
+    def get_block_reward(raw_block: BtcBlock) -> Optional[float]:
+        coinbase_tx = raw_block.tx[0] if raw_block.tx else None
+        if not coinbase_tx:
+            return None
+
+        assert isinstance(coinbase_tx, BtcTransaction), coinbase_tx
+        assert len(coinbase_tx.vin) == 1 and isinstance(coinbase_tx.vin[0], BtcVInCoinbase), coinbase_tx.vin
+        return sum(vout.value for vout in coinbase_tx.vout)
+
     async def write_block(self, raw_block: BtcBlock):
         block: Block = self.provider.convert_raw_block(raw_block)
+        block.reward = self.get_block_reward(raw_block) or 0
 
         async with bulk_write_for(self.block_collection, ordered=False) as db_ops:
+            row = asrow(block)
+            row['reward'] = value2amount(block.reward) if block.reward is not None else None
+
             db_ops.append(UpdateOne(
                 filter={'hash': block.hash},
                 update={
-                    '$set': asrow(block),
+                    '$set': row,
                 },
                 upsert=True,
             ))
