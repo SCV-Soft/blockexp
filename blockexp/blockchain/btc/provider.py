@@ -34,6 +34,7 @@ class BitcoinDaemonProvider(RawProvider):
         return await self.rpc.__aexit__(exc_type, exc_val, exc_tb)
 
     def _cast_block(self, block: BtcBlock) -> Block:
+        assert len(block.tx) == block.nTx
         block_time = datetime.utcfromtimestamp(block.time)
 
         return Block(
@@ -49,7 +50,7 @@ class BitcoinDaemonProvider(RawProvider):
             nonce=block.nonce,
             previousBlockHash=block.previousblockhash,
             nextBlockHash=block.nextblockhash,
-            transactionCount=len(block.tx),  # block.transactionCount
+            transactionCount=block.nTx,
             size=block.size,
             bits=int(block.bits, 16),
             reward=None,
