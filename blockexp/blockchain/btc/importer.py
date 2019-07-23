@@ -8,12 +8,12 @@ from pymongo import UpdateOne, DESCENDING
 
 from .provider import BitcoinDaemonProvider
 from .types import BtcVInCoinbase, BtcVIn, BtcScriptPubKey, BtcVOut, BtcTransaction, BtcBlock
+from .utils import value2amount
 from ...application import Application
 from ...ext.database import MongoCollection, bulk_write_for, connect_database_for
 from ...model import Block
 from ...types import Importer
 from ...utils import asrow
-from ...utils.bitcoin import value2amount
 from ...utils.jsonrpc import JSONRPCError
 
 

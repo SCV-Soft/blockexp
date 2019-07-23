@@ -5,11 +5,7 @@ from bitcoin.core.script import OP_RETURN, OP_DUP, OP_HASH160, OP_EQUALVERIFY, O
     CScriptOp, OP_CHECKMULTISIG, CScriptTruncatedPushDataError
 from bitcoin.core.serialize import Hash160 as sha256ripemd160
 
-__all__ = ["AdvancedCScript", "value2amount"]
-
-
-def value2amount(value: float) -> int:
-    return round(value * 1e8)
+__all__ = ["AdvancedCScript"]
 
 
 def _is_small_int_op(op: int) -> bool:
