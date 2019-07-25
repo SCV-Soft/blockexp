@@ -2,7 +2,6 @@ import asyncio
 from typing import Iterator, Optional, Dict
 
 from .btc import BtcBlockchain
-from .eth import EthBlockchain
 from .jack import JackBlockchain
 from .pch import PchBlockchain
 from ..application import Application
@@ -58,8 +57,6 @@ async def init_app(app: Application) -> dict:
         for network, url in networks.items():
             if chain == "BTC":
                 blockchain = BtcBlockchain(chain, network, app, url)
-            elif chain == "ETH":
-                blockchain = EthBlockchain(chain, network, app, url)
             elif chain == "JACK":
                 blockchain = JackBlockchain(chain, network, app, url)
             elif chain == "PCH":
