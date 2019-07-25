@@ -18,7 +18,7 @@ from pymongo.errors import BulkWriteError
 from pymongo.results import InsertOneResult, InsertManyResult, DeleteResult, UpdateResult
 from starlette.requests import Request
 
-from ..application import Application
+from .application import Application
 
 if TYPE_CHECKING:
     from motor.core import (

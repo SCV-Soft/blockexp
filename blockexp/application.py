@@ -56,7 +56,7 @@ def init_app(*, debug=False) -> Application:
         if not key.startswith('_')
     })
 
-    from .ext import database
+    from . import database
     app.register_extension(database)
 
     from .ext import blockchain
