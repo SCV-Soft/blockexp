@@ -3,10 +3,10 @@ from typing import Union, Any, List, Optional
 
 from pymongo import DESCENDING, ASCENDING, InsertOne, UpdateMany, UpdateOne
 
-from .accessor import BitcoinDaemonAccessor
+from .accessor import BtcDaemonAccessor
 from .bitcoind import AsyncBitcoinDeamon
 from .mongo import BtcMongoDatabase
-from ...database import bulk_write_for
+from ...database import bulk_write_for, MongoCollection
 from ...error import BlockNotFound, TransactionNotFound, WalletNotFound
 from ...model import Block, Transaction, EstimateFee, TransactionId, CoinListing, Authhead, Balance, Coin, Wallet, \
     WalletAddress, WalletCheckResult, DailyTransactions
@@ -15,8 +15,8 @@ from ...types import Provider
 from ...utils import asrow
 
 
-class BitcoinMongoProvider(Provider):
-    def __init__(self, chain: str, network: str, db: BtcMongoDatabase, accessor: BitcoinDaemonAccessor):
+class BtcMongoProvider(Provider):
+    def __init__(self, chain: str, network: str, db: BtcMongoDatabase, accessor: BtcDaemonAccessor):
         super().__init__(chain, network)
         self.db = db
         self.accessor = accessor

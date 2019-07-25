@@ -1,7 +1,7 @@
 import asyncio
 from typing import Iterator, Optional, Dict
 
-from .btc import BitcoinBlockchain
+from .btc import BtcBlockchain
 from .eth import EthBlockchain
 from .jack import JackBlockchain
 from .pch import PchBlockchain
@@ -57,7 +57,7 @@ async def init_app(app: Application) -> dict:
     for chain, networks in app.config["RPC"].items():
         for network, url in networks.items():
             if chain == "BTC":
-                blockchain = BitcoinBlockchain(chain, network, app, url)
+                blockchain = BtcBlockchain(chain, network, app, url)
             elif chain == "ETH":
                 blockchain = EthBlockchain(chain, network, app, url)
             elif chain == "JACK":

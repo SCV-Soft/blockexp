@@ -10,7 +10,7 @@ from ...types import Accessor
 from ...utils.jsonrpc import JSONRPCError
 
 
-class BitcoinDaemonAccessor(Accessor):
+class BtcDaemonAccessor(Accessor):
     def __init__(self, chain: str, network: str, url: str, auth: HTTPBasicAuth):
         super().__init__(chain, network)
         self.rpc = AsyncBitcoinDeamon(url, auth=auth)

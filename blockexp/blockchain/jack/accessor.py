@@ -1,8 +1,8 @@
 from .types import JackBlock, JackTransaction
-from ..btc.accessor import BitcoinDaemonAccessor
+from ..btc.accessor import BtcDaemonAccessor
 
 
-class JackDaemonAccessor(BitcoinDaemonAccessor):
+class JackDaemonAccessor(BtcDaemonAccessor):
     def _convert_raw_transaction(self, transaction: dict) -> JackTransaction:
         return JackTransaction.load(transaction)
 

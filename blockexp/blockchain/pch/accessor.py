@@ -1,8 +1,8 @@
 from .types import PchBlock, PchTransaction
-from ..btc.accessor import BitcoinDaemonAccessor
+from ..btc.accessor import BtcDaemonAccessor
 
 
-class PchDaemonAccessor(BitcoinDaemonAccessor):
+class PchDaemonAccessor(BtcDaemonAccessor):
     def _convert_raw_transaction(self, transaction: dict) -> PchTransaction:
         return PchTransaction.load(transaction)
 

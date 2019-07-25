@@ -1,25 +1,25 @@
-from .accessor import BitcoinDaemonAccessor
-from .importer import BitcoinDaemonImporter
+from .accessor import BtcDaemonAccessor
+from .importer import BtcDaemonImporter
 from .mongo import BtcMongoDatabase
-from .provider import BitcoinMongoProvider
+from .provider import BtcMongoProvider
 from ...application import Application
 from ...database import MongoDatabase
 from ...types import Blockchain, Provider
 from ...utils.url import parse_url
 
 
-class BitcoinBlockchain(Blockchain):
+class BtcBlockchain(Blockchain):
     def __init__(self, chain: str, network: str, app: Application, url: str):
         super().__init__(chain, network)
         self.app = app
         self.url, self.auth = parse_url(url)
 
-    def get_importer(self) -> BitcoinDaemonImporter:
-        return BitcoinDaemonImporter(self.chain, self.network, self.get_accessor(), self.app)
+    def get_importer(self) -> BtcDaemonImporter:
+        return BtcDaemonImporter(self.chain, self.network, self.get_accessor(), self.app)
 
-    def get_accessor(self) -> BitcoinDaemonAccessor:
-        return BitcoinDaemonAccessor(self.chain, self.network, self.url, auth=self.auth)
+    def get_accessor(self) -> BtcDaemonAccessor:
+        return BtcDaemonAccessor(self.chain, self.network, self.url, auth=self.auth)
 
     def get_provider(self, database: MongoDatabase) -> Provider:
         db = BtcMongoDatabase(self.chain, self.network, database)
-        return BitcoinMongoProvider(self.chain, self.network, db, self.get_accessor())
+        return BtcMongoProvider(self.chain, self.network, db, self.get_accessor())

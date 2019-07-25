@@ -6,7 +6,7 @@ from typing import Union, List, Optional
 
 from pymongo import UpdateOne, DESCENDING
 
-from .accessor import BitcoinDaemonAccessor
+from .accessor import BtcDaemonAccessor
 from .mongo import BtcMongoDatabase
 from .types import BtcVInCoinbase, BtcVIn, BtcScriptPubKey, BtcVOut, BtcTransaction, BtcBlock
 from .utils import value2amount
@@ -30,10 +30,10 @@ class BtcTxOutputType(str, Enum):
     witness_unknown = "witness_unknown"
 
 
-class BitcoinDaemonImporter(Importer):
+class BtcDaemonImporter(Importer):
     db: BtcMongoDatabase
 
-    def __init__(self, chain: str, network: str, accessor: BitcoinDaemonAccessor, app: Application):
+    def __init__(self, chain: str, network: str, accessor: BtcDaemonAccessor, app: Application):
         super().__init__(chain, network)
         self.accessor = accessor
         self.app = app
