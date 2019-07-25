@@ -52,7 +52,6 @@ class BtcDaemonImporter(Importer):
         async with connect_database_for(self.app) as database:
             self.db = BtcMongoDatabase(self.chain, self.network, database)
 
-            await self.db.create_indexes()
             await self.task_full_sync()
 
             while True:
