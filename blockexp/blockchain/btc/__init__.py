@@ -21,5 +21,5 @@ class BitcoinBlockchain(Blockchain):
         return BitcoinDaemonAccessor(self.chain, self.network, self.url, auth=self.auth)
 
     def get_provider(self, database: MongoDatabase) -> Provider:
-        db = BtcMongoDatabase(database)
+        db = BtcMongoDatabase(self.chain, self.network, database)
         return BitcoinMongoProvider(self.chain, self.network, db, self.get_accessor())
