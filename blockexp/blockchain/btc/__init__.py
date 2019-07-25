@@ -1,8 +1,9 @@
 from .accessor import BitcoinDaemonAccessor
 from .importer import BitcoinDaemonImporter
+from .mongo import BtcMongoDatabase
 from .provider import BitcoinMongoProvider
 from ...application import Application
-from ...ext.database import MongoDatabase
+from ...database import MongoDatabase
 from ...types import Blockchain, Provider
 from ...utils.url import parse_url
 
@@ -20,4 +21,5 @@ class BitcoinBlockchain(Blockchain):
         return BitcoinDaemonAccessor(self.chain, self.network, self.url, auth=self.auth)
 
     def get_provider(self, database: MongoDatabase) -> Provider:
-        return BitcoinMongoProvider(self.chain, self.network, database, self.get_accessor())
+        db = BtcMongoDatabase(database)
+        return BitcoinMongoProvider(self.chain, self.network, db, self.get_accessor())
