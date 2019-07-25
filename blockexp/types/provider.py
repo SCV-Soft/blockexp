@@ -1,6 +1,6 @@
-from dataclasses import dataclass
 from typing import Union, Any, TypeVar, List, Optional
 
+from ._base import Base
 from ..model import Block, Transaction, CoinListing, Authhead, TransactionId, Balance, EstimateFee, Wallet, Coin, \
     WalletAddress
 from ..model import DailyTransactions
@@ -9,15 +9,7 @@ from ..model.options import SteamingFindOptions
 T = TypeVar('T')
 
 
-@dataclass(init=False)
-class Provider:
-    chain: str
-    network: str
-
-    def __init__(self, chain: str, network: str):
-        self.chain = chain
-        self.network = network
-
+class Provider(Base):
     async def __aenter__(self):
         return self
 

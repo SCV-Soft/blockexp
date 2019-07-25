@@ -1,14 +1,6 @@
-from dataclasses import dataclass
+from ._base import Base
 
 
-@dataclass(init=False)
-class Importer:
-    chain: str
-    network: str
-
-    def __init__(self, chain: str, network: str):
-        self.chain = chain
-        self.network = network
-
+class Importer(Base):
     async def run(self):
         raise NotImplementedError

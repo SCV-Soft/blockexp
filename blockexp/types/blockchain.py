@@ -1,18 +1,12 @@
-from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Any
 
+from ._base import Base
 from .accessor import Accessor
 from .importer import Importer
-from ..ext.database import MongoDatabase
 from .provider import Provider
 
 
-@dataclass(init=False)
-class Blockchain:
-    def __init__(self, chain: str, network: str):
-        self.chain = chain
-        self.network = network
-
+class Blockchain(Base):
     def get_importer(self) -> Optional[Importer]:
         return None
 
