@@ -1,5 +1,6 @@
-__all__ = ["Blockchain", "Importer", "Provider", "Service"]
+__all__ = ["Base", "Blockchain", "Importer", "Provider", "Service"]
 
+from ._base import Base
 from .accessor import Accessor
 from .blockchain import Blockchain
 from .importer import Importer
