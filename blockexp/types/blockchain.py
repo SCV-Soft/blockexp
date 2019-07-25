@@ -13,5 +13,5 @@ class Blockchain(Base):
     def get_accessor(self) -> Accessor:
         raise NotImplementedError
 
-    def get_provider(self, database: MongoDatabase) -> Provider:
+    def get_provider(self, database: Any) -> Provider:
         raise NotImplementedError
