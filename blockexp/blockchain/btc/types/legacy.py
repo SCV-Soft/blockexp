@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from .types import BtcTransaction, BtcBlock
+from . import BtcTransaction, BtcBlock
 
 
 @dataclass

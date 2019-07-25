@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from ..btc.legacy import LegacyBtcTransaction, LegacyBtcBlock
+from ..btc.types.legacy import LegacyBtcTransaction, LegacyBtcBlock
 
 
 class PchTransaction(LegacyBtcTransaction):
