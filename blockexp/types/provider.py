@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from enum import Enum
 from typing import Union, Any, TypeVar, List, Optional
 
 from ..model import Block, Transaction, CoinListing, Authhead, TransactionId, Balance, EstimateFee, Wallet, Coin, \
@@ -10,11 +9,6 @@ from ..model.options import SteamingFindOptions
 T = TypeVar('T')
 
 
-class ProviderType(Enum):
-    UTXO = "utxo"
-    NONCE = "nonce"
-
-
 @dataclass(init=False)
 class Provider:
     chain: str
@@ -23,10 +17,6 @@ class Provider:
     def __init__(self, chain: str, network: str):
         self.chain = chain
         self.network = network
-
-    @property
-    def type(self) -> ProviderType:
-        raise NotImplementedError
 
     async def __aenter__(self):
         return self
