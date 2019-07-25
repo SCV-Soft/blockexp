@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from .accessor import Accessor
 from .importer import Importer
-from .provider import Provider, RawProvider
 from ..ext.database import MongoDatabase
+from .provider import Provider
 
 
 @dataclass(init=False)
@@ -15,8 +16,8 @@ class Blockchain:
     def get_importer(self) -> Optional[Importer]:
         return None
 
-    def get_provider(self) -> RawProvider:
+    def get_accessor(self) -> Accessor:
         raise NotImplementedError
 
-    def get_full_provider(self, database: MongoDatabase) -> Provider:
+    def get_provider(self, database: MongoDatabase) -> Provider:
         raise NotImplementedError
