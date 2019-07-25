@@ -10,7 +10,7 @@ from .accessor import BitcoinDaemonAccessor
 from .types import BtcVInCoinbase, BtcVIn, BtcScriptPubKey, BtcVOut, BtcTransaction, BtcBlock
 from .utils import value2amount
 from ...application import Application
-from ...ext.database import MongoCollection, bulk_write_for, connect_database_for
+from ...database import MongoCollection, bulk_write_for, connect_database_for
 from ...model import Block
 from ...types import Importer
 from ...utils import asrow

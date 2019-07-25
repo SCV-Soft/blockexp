@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from starlette.requests import Request
 
 from starlette_typed.endpoint import register_handler
-from ..ext.blockchain import get_blockchain
+from ..blockchain import get_blockchain
 from ..ext.database import connect_database
 from ..types import Provider
 
@@ -21,5 +21,5 @@ async def provider(request: Request) -> Provider:
             raise NotImplementedError((chain, network))
 
         # noinspection PyShadowingNames
-        async with blockchain.get_full_provider(database) as provider:
+        async with blockchain.get_provider(database) as provider:
             yield provider

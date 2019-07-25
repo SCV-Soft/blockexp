@@ -4,7 +4,7 @@ import socketio
 import uvicorn
 from starlette.applications import Starlette
 
-from .service import Service
+from .types import Service
 
 
 class Application(Starlette):
