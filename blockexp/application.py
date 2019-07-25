@@ -62,7 +62,7 @@ def init_app(*, debug=False) -> Application:
     from .ext import blockchain
     app.register_extension(blockchain)
 
-    from .ext import fixture
+    from . import fixture
     app.register_extension(fixture)
 
     from .api import api
