@@ -263,7 +263,7 @@ class DatabasePool:
             client.close()
 
 
-def init_app(app: Application) -> DatabasePool:
+async def init_app(app: Application) -> DatabasePool:
     url = DatabaseURL(app.config.get('DATABASE_URL', 'mongodb:///default'))
     return DatabasePool(url, max_size=32)
 

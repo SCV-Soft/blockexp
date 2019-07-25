@@ -52,7 +52,7 @@ class ImportBlockchainService(Service):
                 pass
 
 
-def init_app(app: Application) -> dict:
+async def init_app(app: Application) -> dict:
     blockchain_pool = {}
     for chain, networks in app.config["RPC"].items():
         for network, url in networks.items():

@@ -1,3 +1,4 @@
+import asyncio
 import os
 import time
 import traceback
@@ -64,6 +65,7 @@ def main():
 
 def __getattr__(name):
     if name == "app":
-        return init_app(debug=True).ready()
+        app = asyncio.run(init_app(debug=True))
+        return app.ready()
 
     raise AttributeError(name)

@@ -35,8 +35,8 @@ class Application(Starlette):
     def get_extension(self, name: str):
         return self.extensions[name]
 
-    def register_extension(self, extension: Any):
-        self.extensions[extension.__name__] = extension.init_app(self)
+    async def register_extension(self, extension: Any):
+        self.extensions[extension.__name__] = await extension.init_app(self)
 
     def serve(self):
         uvicorn.run(
@@ -46,7 +46,7 @@ class Application(Starlette):
         )
 
 
-def init_app(*, debug=False) -> Application:
+async def init_app(*, debug=False) -> Application:
     app = Application(debug=debug)
 
     from . import config
@@ -57,18 +57,18 @@ def init_app(*, debug=False) -> Application:
     })
 
     from . import database
-    app.register_extension(database)
+    await app.register_extension(database)
 
     from . import blockchain
-    app.register_extension(blockchain)
+    await app.register_extension(blockchain)
 
     from . import fixture
-    app.register_extension(fixture)
+    await app.register_extension(fixture)
 
     from .api import api
     app.mount('/api', api)
 
     from .ext import swagger
-    app.register_extension(swagger)
+    await app.register_extension(swagger)
 
     return app

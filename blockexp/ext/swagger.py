@@ -48,7 +48,7 @@ async def custom_schema(request: Request):
     return OpenAPIResponse(content)
 
 
-def init_app(app: Application):
+async def init_app(app: Application):
     swagger = Router()
     swagger.add_route('/schema/{chain}/{network}', custom_schema, include_in_schema=False)
 
