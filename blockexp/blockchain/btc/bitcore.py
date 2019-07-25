@@ -10,7 +10,7 @@ from starlette.exceptions import HTTPException
 from ...model import get_schema, Block, Transaction, CoinListing, Authhead, Balance, Coin, \
     EstimateFee, Wallet, WalletAddress, TransactionId
 from ...model.options import SteamingFindOptions
-from ...types import Provider, ProviderType
+from ...types import Provider
 
 
 class AsyncBitcore:
@@ -46,10 +46,6 @@ class BitcoreProvider(Provider):
     def __init__(self, chain: str, network: str):
         super().__init__(chain, network)
         self.api = AsyncBitcore(chain, network)
-
-    @property
-    def type(self) -> ProviderType:
-        return ProviderType.UTXO
 
     async def __aenter__(self):
         await self.api.__aenter__()
