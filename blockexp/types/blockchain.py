@@ -7,6 +7,9 @@ from .provider import Provider
 
 
 class Blockchain(Base):
+    async def ready(self):
+        pass
+
     def get_importer(self) -> Optional[Importer]:
         return None
 

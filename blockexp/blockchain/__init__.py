@@ -64,6 +64,8 @@ async def init_app(app: Application) -> dict:
             else:
                 raise NotImplementedError(chain)
 
+            await blockchain.ready()
+
             blockchain_pool[chain, network] = blockchain
 
     app.register_service(ImportBlockchainService(app))
