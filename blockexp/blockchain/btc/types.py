@@ -78,9 +78,20 @@ class BtcTransaction:
         if self.vout and not isinstance(self.vout[0], BtcVOut):
             self.vout = [BtcVOut(**item) for item in self.vout]
 
+    @classmethod
+    def load(cls, raw_tx: dict):
+        cls.fix_tx(raw_tx)
+        return cls(**raw_tx)
+
+    @classmethod
+    def fix_tx(cls, raw_tx):
+        pass
+
 
 @dataclass
 class BtcBlock:
+    TRANSACTION_CLASS = BtcTransaction
+
     hash: str  # (string) the block hash (same as provided)
     confirmations: int  # (numeric) The number of confirmations, or -1 if the block is not on the main chain
     size: int  # (numeric) The block size
@@ -107,4 +118,13 @@ class BtcBlock:
 
     @classmethod
     def parse_tx(cls, raw_tx):
-        return BtcTransaction(**raw_tx)
+        return cls.TRANSACTION_CLASS.load(raw_tx)
+
+    @classmethod
+    def load(cls, raw_block: dict):
+        cls.fix_block(raw_block)
+        return cls(**raw_block)
+
+    @classmethod
+    def fix_block(cls, raw_block):
+        pass
