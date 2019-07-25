@@ -1,8 +1,8 @@
-from ..btc import BitcoinDaemonProvider
+from ..btc.accessor import BitcoinDaemonAccessor
 from ..btc.types import BtcTransaction, BtcBlock
 
 
-class PchDaemonProvider(BitcoinDaemonProvider):
+class PchDaemonAccessor(BitcoinDaemonAccessor):
     def _convert_raw_transaction(self, transaction: dict) -> BtcTransaction:
         transaction['hash'] = transaction['txid']
         transaction['vsize'] = transaction['size']

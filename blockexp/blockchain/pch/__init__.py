@@ -1,7 +1,7 @@
-from .provider import PchDaemonProvider
+from .accessor import PchDaemonAccessor
 from ..btc import BitcoinBlockchain
 
 
 class PchBlockchain(BitcoinBlockchain):
-    def get_provider(self) -> PchDaemonProvider:
-        return PchDaemonProvider(self.chain, self.network, self.url, auth=self.auth)
+    def get_accessor(self) -> PchDaemonAccessor:
+        return PchDaemonAccessor(self.chain, self.network, self.url, auth=self.auth)

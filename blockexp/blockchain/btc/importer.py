@@ -6,7 +6,7 @@ from typing import Union, List, Optional
 
 from pymongo import UpdateOne, DESCENDING
 
-from .provider import BitcoinDaemonProvider
+from .accessor import BitcoinDaemonAccessor
 from .types import BtcVInCoinbase, BtcVIn, BtcScriptPubKey, BtcVOut, BtcTransaction, BtcBlock
 from .utils import value2amount
 from ...application import Application
@@ -30,14 +30,14 @@ class BtcTxOutputType(str, Enum):
 
 
 class BitcoinDaemonImporter(Importer):
-    def __init__(self, chain: str, network: str, provider: BitcoinDaemonProvider, app: Application):
+    def __init__(self, chain: str, network: str, accessor: BitcoinDaemonAccessor, app: Application):
         super().__init__(chain, network)
-        self.provider = provider
+        self.accessor = accessor
         self.app = app
 
     @property
     def _collection_key(self) -> str:
-        return f'{self.provider.chain}:{self.provider.network}'
+        return f'{self.accessor.chain}:{self.accessor.network}'
 
     @property
     def block_collection(self) -> MongoCollection:
@@ -167,7 +167,7 @@ class BitcoinDaemonImporter(Importer):
 
     async def get_local_block(self, block_height: int) -> Optional[Block]:
         try:
-            return await self.provider.get_block(block_height)
+            return await self.accessor.get_block(block_height)
         except JSONRPCError as e:
             if e.code == -8:
                 return None
@@ -175,7 +175,7 @@ class BitcoinDaemonImporter(Importer):
             raise
 
     async def get_local_tip(self) -> Block:
-        return await self.provider.get_local_tip()
+        return await self.accessor.get_local_tip()
         # return await self.get_local_block(1200)
 
     async def undo_block(self, height: int):
@@ -205,7 +205,7 @@ class BitcoinDaemonImporter(Importer):
 
     async def import_block(self, height: int):
         print(self.chain, self.network, 'processing', height, 'block')
-        raw_block: BtcBlock = await self.provider.get_raw_block(height)
+        raw_block: BtcBlock = await self.accessor.get_raw_block(height)
 
         mint_ops = self.get_mint_ops(height, raw_block.tx)
         spend_ops = self.get_spend_ops(height, raw_block.tx, mint_ops)
@@ -226,7 +226,7 @@ class BitcoinDaemonImporter(Importer):
         return sum(vout.value for vout in coinbase_tx.vout)
 
     async def write_block(self, raw_block: BtcBlock):
-        block: Block = self.provider.convert_raw_block(raw_block)
+        block: Block = self.accessor.convert_raw_block(raw_block)
         block.reward = self.get_block_reward(raw_block) or 0
 
         async with bulk_write_for(self.block_collection, ordered=False) as db_ops:
@@ -255,7 +255,7 @@ class BitcoinDaemonImporter(Importer):
     async def write_txs(self, raw_block: BtcBlock, txs: List[BtcTransaction]):
         async with bulk_write_for(self.tx_collection, ordered=False) as db_ops:
             for raw_tx in txs:
-                tx = self.provider.convert_raw_transaction(raw_tx, raw_block)
+                tx = self.accessor.convert_raw_transaction(raw_tx, raw_block)
                 row = asrow(tx)
                 row['value'] = value2amount(tx.value)
 
