@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from requests import Request
 
 from starlette_typed.endpoint import register_handler
-from ..ext.database import MongoDatabase, connect_database
+from ..database import MongoDatabase, connect_database
 
 
 @register_handler

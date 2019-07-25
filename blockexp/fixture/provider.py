@@ -4,7 +4,7 @@ from starlette.requests import Request
 
 from starlette_typed.endpoint import register_handler
 from ..blockchain import get_blockchain
-from ..ext.database import connect_database
+from ..database import connect_database
 from ..types import Provider
 
 

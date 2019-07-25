@@ -5,7 +5,7 @@ from starlette.requests import Request
 from starlette.routing import Router
 
 from starlette_typed import typed_endpoint
-from ...ext.blockchain import iter_blockchain
+from ...blockchain import iter_blockchain
 
 api = Router()
 
