@@ -1,8 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, Union
 
-from ...utils import check_schemas
-
 
 @dataclass
 class BtcVInCoinbase:
@@ -105,4 +103,8 @@ class BtcBlock:
 
     def __post_init__(self):
         if self.tx and isinstance(self.tx[0], dict):
-            self.tx = [BtcTransaction(**item) for item in self.tx]
+            self.tx = [self.parse_tx(item) for item in self.tx]
+
+    @classmethod
+    def parse_tx(cls, raw_tx):
+        return BtcTransaction(**raw_tx)
