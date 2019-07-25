@@ -75,6 +75,23 @@ class BitcoinDaemonAccessor(Accessor):
             wallets=transaction.wallets,
         )
 
+    async def _detect_legacy_getblock(self, *, verbosity: int):
+        test_hash = await self.rpc.getbestblockhash()
+
+        try:
+            await self.rpc.getblock(test_hash, True)
+        except JSONRPCError:
+            # TODO: failure test function
+            raise
+        else:
+            try:
+                await self.rpc.getblock(test_hash, verbosity)
+            except JSONRPCError as e:
+                if e.code == -1:
+                    return True
+            else:
+                return False
+
     async def _get_block(self, block_id: Union[str, int], *, verbosity: int) -> BtcBlock:
         if isinstance(block_id, int):
             block_hash = await self.rpc.getblockhash(int(block_id))
@@ -82,21 +99,7 @@ class BitcoinDaemonAccessor(Accessor):
             block_hash = block_id
 
         if self.is_legacy_getblock is None:
-            test_hash = await self.rpc.getbestblockhash()
-
-            try:
-                await self.rpc.getblock(test_hash, True)
-            except JSONRPCError:
-                # TODO: failure test function
-                raise
-            else:
-                try:
-                    await self.rpc.getblock(test_hash, verbosity)
-                except JSONRPCError as e:
-                    if e.code == -1:
-                        self.is_legacy_getblock = True
-                else:
-                    self.is_legacy_getblock = False
+            self.is_legacy_getblock = await self._detect_legacy_getblock(verbosity=verbosity)
 
         if self.is_legacy_getblock:
             if verbosity == 0:
