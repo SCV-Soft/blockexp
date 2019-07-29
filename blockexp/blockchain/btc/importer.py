@@ -152,6 +152,7 @@ class BtcDaemonImporter(Importer):
 
         mint_ops = self.get_mint_ops(height, raw_block.tx)
         spend_ops = self.get_spend_ops(height, raw_block.tx, mint_ops)
+        await self.update_wallets(mint_ops)
 
         await self.write_mint_ops(mint_ops)
         await self.write_spend_ops(spend_ops)
@@ -316,3 +317,18 @@ class BtcDaemonImporter(Importer):
                         },
                     },
                 ))
+
+    async def update_wallets(self, mint_ops: List[dict]):
+        mapping = defaultdict(list)
+        for mint_op in mint_ops:
+            for address in mint_op['addresses']:
+                mapping[address].append(mint_op)
+
+        addresses = list(mapping)
+
+        async for wallet_address in self.db.wallet_address_collection.find({'address': {'$in': addresses}}):
+            address = wallet_address['address']
+            wallet = wallet_address['wallet']
+
+            for target_op in mapping[address]:
+                target_op['wallets'].append(wallet)
