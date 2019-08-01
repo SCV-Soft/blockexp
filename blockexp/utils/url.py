@@ -4,6 +4,11 @@ from urllib.parse import ParseResult, urlparse
 from requests.auth import HTTPBasicAuth
 
 
+def get_scheme(url: str) -> str:
+    pr: ParseResult = urlparse(url)
+    return pr.scheme
+
+
 def parse_url(url: str) -> Tuple[str, Optional[HTTPBasicAuth]]:
     pr: ParseResult = urlparse(url)
     if pr.username or pr.password:
