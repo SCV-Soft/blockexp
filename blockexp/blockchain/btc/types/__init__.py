@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Union
+from typing import List, Union, Optional
 
 
 @dataclass
@@ -110,7 +110,7 @@ class BtcBlock:
     chainwork: str  # (string) Expected number of hashes required to produce the chain up to this block (in hex)
     nTx: int  # (numeric) The number of transactions in the block.
     previousblockhash: str = None  # (string) The hash of the previous block
-    nextblockhash: str = None  # (string) The hash of the next block
+    nextblockhash: Optional[str] = None  # (string) The hash of the next block
 
     def __post_init__(self):
         if self.tx and isinstance(self.tx[0], dict):
