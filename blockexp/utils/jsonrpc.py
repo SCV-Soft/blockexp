@@ -60,11 +60,9 @@ def jsonrpc20_result(result: dict) -> Tuple[Optional[int], Optional[Any], Option
     return result_id, result, None
 
 
-# noinspection PyPep8Naming
-class AsyncJsonRPC:
-    def __init__(self, url: str, *, auth: HTTPBasicAuth = None):
-        self.url = url
-        self.auth = auth
+class AsyncRequestsTunnel:
+    def __init__(self, url: str):
+        self.url, self.auth = parse_url(url)
         self.session = requests.Session()
 
     async def __aenter__(self):
@@ -110,5 +108,35 @@ class AsyncJsonRPC:
             raise error
 
         return result
+
+
+# noinspection PyPep8Naming
+class AsyncJsonRPC:
+    tunnel: Union[AsyncRequestsTunnel, AsyncWebsocketTunnel]
+
+    SCHEME_TUNNELS = {
+        "http": AsyncRequestsTunnel,
+        "https": AsyncRequestsTunnel,
+    }
+
+    def __init__(self, url: str):
+        self.url = url
+        self.tunnel = self.build_tunnel(url)
+
+    @classmethod
+    def build_tunnel(cls, url: str):
+        scheme = get_scheme(url)
+        tunnel_cls = cls.SCHEME_TUNNELS[scheme]
+        return tunnel_cls(url)
+
+    async def __aenter__(self):
+        await self.tunnel.__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return await self.tunnel.__aexit__(exc_type, exc_val, exc_tb)
+
+    async def call(self, method, *params) -> Any:
+        return await self.tunnel.call(method, *params)
 
     # TODO: batch?
