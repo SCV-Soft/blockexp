@@ -18,6 +18,7 @@ from pymongo.errors import BulkWriteError
 from pymongo.results import InsertOneResult, InsertManyResult, DeleteResult, UpdateResult
 from starlette.requests import Request
 
+from starlette_typed.endpoint import register_handler
 from .application import Application
 
 if TYPE_CHECKING:
@@ -310,3 +311,11 @@ async def bulk_write_for(collection: MongoCollection, *, ordered: bool) -> List:
                 except Exception:
                     print('failure:', db_op)
                     raise
+
+
+@register_handler
+@asynccontextmanager
+async def database(request: Request) -> MongoDatabase:
+    async with connect_database(request) as database:
+        async with database:
+            yield database

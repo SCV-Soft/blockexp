@@ -1,12 +1,36 @@
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
+from starlette.requests import Request
 from starlette.routing import Router
+
+from starlette_typed.endpoint import register_handler
+from ...blockchain import get_blockchain
+from ...database import connect_database
+from ...types import Provider
 
 
 @dataclass
 class ApiPath:
     chain: str
     network: str
+
+
+@register_handler
+@asynccontextmanager
+async def provider(request: Request) -> Provider:
+    path_params = request.path_params
+    chain = path_params['chain']
+    network = path_params['network']
+
+    async with connect_database(request) as database:
+        blockchain = get_blockchain(chain, network, request.app)
+        if blockchain is None:
+            raise NotImplementedError((chain, network))
+
+        # noinspection PyShadowingNames
+        async with blockchain.get_provider(database) as provider:
+            yield provider
 
 
 def build_api() -> Router:

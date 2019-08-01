@@ -62,9 +62,6 @@ async def init_app(*, debug=False) -> Application:
     from . import blockchain
     await app.register_extension(blockchain)
 
-    from . import fixture
-    await app.register_extension(fixture)
-
     from .api import api
     app.mount('/api', api)
 
