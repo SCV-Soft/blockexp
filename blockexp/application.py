@@ -65,8 +65,8 @@ async def init_app(*, debug=False) -> Application:
     from .ext import apispec
     await app.register_extension(apispec)
 
-    from .api import api
-    app.mount('/api', api)
+    from .api import bitcore
+    app.mount('/api/', bitcore.api)
 
     from .ext import swagger
     await app.register_extension(swagger)
