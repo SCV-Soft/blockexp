@@ -29,7 +29,7 @@ class Block:
     timeNormalized: datetime
     nonce: int
     previousBlockHash: str
-    nextBlockHash: str
+    nextBlockHash: Optional[str]
     transactionCount: int
     size: int
     bits: int
@@ -50,7 +50,7 @@ class Coin:
     script: str = None
     address: str = None
     addresses: List[str] = field(default_factory=list)
-    spentTxid: str = None
+    spentTxid: Optional[str] = None
     spentHeight: int = -1
     confirmations: Optional[int] = 0
     wallets: List[str] = field(default_factory=list)
