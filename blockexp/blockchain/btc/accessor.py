@@ -1,8 +1,6 @@
 from datetime import datetime
 from typing import Union, Any
 
-from requests.auth import HTTPBasicAuth
-
 from .bitcoind import AsyncBitcoinDeamon
 from .types import BtcTransaction, BtcBlock
 from ...model import Block, Transaction, EstimateFee
@@ -11,9 +9,9 @@ from ...utils.jsonrpc import JSONRPCError
 
 
 class BtcDaemonAccessor(Accessor):
-    def __init__(self, chain: str, network: str, url: str, auth: HTTPBasicAuth):
+    def __init__(self, chain: str, network: str, url: str):
         super().__init__(chain, network)
-        self.rpc = AsyncBitcoinDeamon(url, auth=auth)
+        self.rpc = AsyncBitcoinDeamon(url)
         self.is_legacy_getblock = None
 
     async def __aenter__(self):
