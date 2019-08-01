@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Union, List, cast, Optional
+from typing import TYPE_CHECKING, Union, List, cast, Optional, AsyncIterable
 
 from databases import DatabaseURL
 from motor.motor_asyncio import (
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from pymongo.client_session import ClientSession
 
     AsyncIOMotorCollection = Union[Collection, AgnosticCollection]
-    AsyncIOMotorCursor = Union[Cursor, AgnosticCursor]
+    AsyncIOMotorCursor = Union[Cursor, AgnosticCursor, AsyncIterable]
     AsyncIOMotorClientSession = Union[ClientSession, AgnosticClientSession]
     AsyncIOMotorLatentCommandCursor = Union[AgnosticLatentCommandCursor, AsyncIOMotorLatentCommandCursor]
     AsyncIOMotorChangeStream = Union[AgnosticChangeStream, AsyncIOMotorChangeStream]
@@ -89,7 +89,6 @@ class MongoDatabase:
 class MongoCollection:
     _database: MongoDatabase
     _collection: AsyncIOMotorCollection
-    _session: AsyncIOMotorClientSession
 
     def __init__(self, collection: AsyncIOMotorCollection, *, database: MongoDatabase):
         self._database = database
@@ -233,8 +232,12 @@ class MongoCollection:
 
 
 if TYPE_CHECKING:
-    MongoCollection = Union[MongoCollection, AgnosticCollection]
-    MongoCursor = Union[MongoCollection, AgnosticCursor]
+    class MongoCollection(MongoCollection, AgnosticCollection):
+        pass
+
+
+    class MongoCursor(AgnosticCursor):
+        pass
 
 
 class DatabasePool:
