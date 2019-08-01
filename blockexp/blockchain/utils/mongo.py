@@ -1,9 +1,8 @@
 from collections import Callable
 from typing import Optional, List, TypeVar, Generic
 
-from blockexp.model import Balance
 from ...database import MongoDatabase, MongoCollection
-from ...model import Block, Transaction, Coin, Wallet, WalletAddress
+from ...model import Block, Transaction, Coin, Wallet, WalletAddress, Balance
 from ...model.options import SteamingFindOptions, Direction
 from ...types import Base
 
