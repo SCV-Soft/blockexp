@@ -5,7 +5,7 @@ from starlette.schemas import OpenAPIResponse
 
 from starlette_typed import TypedStarletteSchemaGenerator
 from swagger.ui import create_swagger
-from ..api import apispec
+from .apispec import apispec
 from ..application import Application
 
 REPLACE_PATH = False
