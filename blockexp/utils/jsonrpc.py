@@ -1,13 +1,15 @@
 import asyncio
 from http import HTTPStatus
 from json import JSONDecodeError
-from typing import Any, Tuple, Optional
+from typing import Any, Tuple, Optional, Union
 
 import requests_async as requests
 from h11 import RemoteProtocolError
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import ConnectionError as RequestsConnectionError
 from requests_async import Response
+
+from .url import get_scheme, parse_url
 
 
 class JSONRPCException(Exception):
@@ -110,6 +112,23 @@ class AsyncRequestsTunnel:
         return result
 
 
+class AsyncWebsocketTunnel:
+    def __init__(self, url, auth: HTTPBasicAuth = None):
+        self.url = url
+        self.auth = auth
+        self.session = requests.Session()
+
+    async def __aenter__(self):
+        await self.session.__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return await self.session.__aexit__(exc_type, exc_val, exc_tb)
+
+    async def call(self, method, *params) -> Any:
+        raise NotImplementedError
+
+
 # noinspection PyPep8Naming
 class AsyncJsonRPC:
     tunnel: Union[AsyncRequestsTunnel, AsyncWebsocketTunnel]
@@ -117,6 +136,8 @@ class AsyncJsonRPC:
     SCHEME_TUNNELS = {
         "http": AsyncRequestsTunnel,
         "https": AsyncRequestsTunnel,
+        "ws": AsyncWebsocketTunnel,
+        "wss": AsyncWebsocketTunnel,
     }
 
     def __init__(self, url: str):
