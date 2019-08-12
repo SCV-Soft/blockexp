@@ -8,10 +8,11 @@ from ...types import Blockchain
 
 
 class EthBlockchain(Blockchain):
-    def __init__(self, chain: str, network: str, app: Application, url: str):
+    def __init__(self, chain: str, network: str, app: Application, url: str, **config):
         super().__init__(chain, network)
         self.app = app
         self.url = url
+        self.config = config
 
     def get_db(self, database: MongoDatabase) -> EthMongoDatabase:
         return EthMongoDatabase(self.chain, self.network, database)
