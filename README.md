@@ -29,9 +29,9 @@ Ubuntu 19.04 LTS 기준으로 작성되어 있습니다.
 
 ## 백엔드 서버 실행 방법
 
-1. `pipenv sync`
-2. `blockexp/config.py` 파일 편집
-3. `pipenv run python -m blockexp`
+1. `poetry install`
+2. `blockexp.toml` 파일 편집
+3. `poetry run python -m blockexp`
 
 
 
