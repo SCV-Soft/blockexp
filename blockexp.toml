@@ -1,0 +1,9 @@
+[server]
+host = "0.0.0.0"
+port = 8000
+
+[[blockchain]]
+chain = "ETH"
+network = "mainnet"
+url = "http://localhost:8545"
+enabled = true
