@@ -1,9 +1,15 @@
-from base64 import b16decode
 from typing import List, Union
 
-from bitcoin.core.script import OP_RETURN, OP_DUP, OP_HASH160, OP_EQUALVERIFY, OP_CHECKSIG, OP_0, OP_1, OP_16, CScript, \
-    CScriptOp, OP_CHECKMULTISIG, CScriptTruncatedPushDataError
-from bitcoin.core.serialize import Hash160 as sha256ripemd160
+from base64 import b16decode
+
+try:
+    import bitcoin
+except ImportError as e:
+    raise Exception("You need install python-bitcoinlib")
+else:
+    from bitcoin.core.script import OP_RETURN, OP_DUP, OP_HASH160, OP_EQUALVERIFY, OP_CHECKSIG, OP_0, OP_1, OP_16, \
+        CScript, CScriptOp, OP_CHECKMULTISIG, CScriptTruncatedPushDataError
+    from bitcoin.core.serialize import Hash160 as sha256ripemd160
 
 __all__ = ["AdvancedCScript"]
 
