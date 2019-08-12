@@ -111,15 +111,15 @@ class BlockchainMongoDatabase(Base):
         return WalletAddress(**raw_wallet_address, chain=self.chain, network=self.network)
 
 
-def get_balance(raw_coins: List[dict]) -> Balance:
+def get_balance(raw_coins: List[Coin]) -> Balance:
     confirmed = 0
     unconfirmed = 0
     balance = 0
 
     for raw_coin in raw_coins:
-        value = raw_coin['value']
+        value = raw_coin.value
 
-        is_confirmed = raw_coin['mintHeight'] >= 0  # always true
+        is_confirmed = raw_coin.mintHeight >= 0  # always true
         if is_confirmed:
             confirmed += value
         else:
