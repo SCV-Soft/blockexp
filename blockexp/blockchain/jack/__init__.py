@@ -4,4 +4,4 @@ from ..btc import BtcBlockchain
 
 class JackBlockchain(BtcBlockchain):
     def get_accessor(self) -> JackDaemonAccessor:
-        return JackDaemonAccessor(self.chain, self.network, self.url, auth=self.auth)
+        return JackDaemonAccessor(self.chain, self.network, self.url)

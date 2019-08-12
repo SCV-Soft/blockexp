@@ -4,4 +4,4 @@ from ..btc import BtcBlockchain
 
 class PchBlockchain(BtcBlockchain):
     def get_accessor(self) -> PchDaemonAccessor:
-        return PchDaemonAccessor(self.chain, self.network, self.url, auth=self.auth)
+        return PchDaemonAccessor(self.chain, self.network, self.url)
