@@ -8,6 +8,13 @@ from .pch import PchBlockchain
 from ..application import Application
 from ..types import Blockchain, Service
 
+CHAINS = {
+    "BTC": BtcBlockchain,
+    "ETH": EthBlockchain,
+    "JACK": JackBlockchain,
+    "PCH": PchBlockchain,
+}
+
 
 class ImportBlockchainService(Service):
     def __init__(self, app: Application):
@@ -54,22 +61,36 @@ class ImportBlockchainService(Service):
 
 async def init_app(app: Application) -> dict:
     blockchain_pool = {}
-    for chain, networks in app.config["RPC"].items():
-        for network, url in networks.items():
-            if chain == "BTC":
-                blockchain = BtcBlockchain(chain, network, app, url)
-            elif chain == "ETH":
-                blockchain = EthBlockchain(chain, network, app, url)
-            elif chain == "JACK":
-                blockchain = JackBlockchain(chain, network, app, url)
-            elif chain == "PCH":
-                blockchain = PchBlockchain(chain, network, app, url)
-            else:
-                raise NotImplementedError(chain)
+    for cfg in app.config.get("blockchain", []):
+        if not cfg.get('enabled', True):
+            continue
 
-            await blockchain.ready()
+        data = cfg.copy()
+        data.pop('enabled', None)
 
-            blockchain_pool[chain, network] = blockchain
+        chain = data.pop('chain')
+        network = data.pop('network')
+        blockchain_type = data.pop("type", chain)
+
+        if not isinstance(blockchain_type, str) or not blockchain_type:
+            raise ValueError("Invalid blockchain config: {!r}".format(cfg))
+
+        blockchain_type = blockchain_type.upper()
+
+        blockchain_cls = CHAINS.get(blockchain_type)
+        if blockchain_cls is None:
+            raise NotImplementedError(blockchain_type)
+
+        blockchain: Blockchain = blockchain_cls(
+            chain=chain,
+            network=network,
+            app=app,
+            **data,
+        )
+
+        await blockchain.ready()
+
+        blockchain_pool[chain, network] = blockchain
 
     app.register_service(ImportBlockchainService(app))
     return blockchain_pool

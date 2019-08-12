@@ -8,10 +8,10 @@ from .types import Service
 
 
 class Application(Starlette):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *, config: dict, **kwargs):
+        super().__init__(**kwargs)
+        self.config = config
         self.extensions = {}
-        self.config = {}
         self.services = []
         self.sio = socketio.AsyncServer(async_mode='asgi')
 
@@ -39,22 +39,17 @@ class Application(Starlette):
         self.extensions[extension.__name__] = await extension.init_app(self)
 
     def serve(self):
+        server_config = self.config.get('server', {})
+
         uvicorn.run(
             self.ready(),
-            host=self.config.get('HOST', '0.0.0.0'),
-            port=self.config.get('PORT', 8000),
+            host=server_config.get('host', '127.0.0.1'),
+            port=server_config.get('port', 8000),
         )
 
 
-async def init_app(*, debug=False) -> Application:
-    app = Application(debug=debug)
-
-    from . import config
-    app.config.update({
-        key: value
-        for key, value in vars(config).items()
-        if not key.startswith('_')
-    })
+async def init_app(config: dict, *, debug=False) -> Application:
+    app = Application(config=config, debug=debug)
 
     from . import database
     await app.register_extension(database)
