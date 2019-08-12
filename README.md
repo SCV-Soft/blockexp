@@ -13,6 +13,7 @@
 - Python 3.7 (+ pipenv)
 - MongoDB 4.0
 - NodeJS v10
+- Redis
 
 
 
