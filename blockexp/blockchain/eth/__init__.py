@@ -11,7 +11,7 @@ class EthBlockchain(Blockchain):
     def __init__(self, chain: str, network: str, app: Application, url: str):
         super().__init__(chain, network)
         self.app = app
-        self.url = parse_url(url)
+        self.url = url
 
     def get_db(self, database: MongoDatabase) -> EthMongoDatabase:
         return EthMongoDatabase(self.chain, self.network, database)
