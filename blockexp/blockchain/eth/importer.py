@@ -42,7 +42,7 @@ class EthDaemonImporter(Importer):
 
             while True:
                 await self.task_progress_sync()
-                await asyncio.sleep(30)
+                await asyncio.sleep(5)
 
     async def task_full_sync(self):
         db_tip = await self.get_db_tip()
