@@ -1,5 +1,5 @@
 import asyncio
-from typing import Iterator, Optional, Dict
+from typing import Iterator, Optional, List, Tuple
 
 from .btc import BtcBlockchain
 from .eth import EthBlockchain
@@ -19,7 +19,7 @@ CHAINS = {
 class ImportBlockchainService(Service):
     def __init__(self, app: Application):
         self.app = app
-        self.tasks: Dict[Blockchain, asyncio.Task] = {}
+        self.tasks: List[Tuple[Blockchain, asyncio.Task]] = []
         self.watcher = None
 
     async def on_startup(self):
@@ -32,11 +32,11 @@ class ImportBlockchainService(Service):
         importer = blockchain.get_importer()
         if importer is not None:
             task: asyncio.Future = asyncio.ensure_future(importer.run())
-            self.tasks[blockchain] = task
+            self.tasks.append((blockchain, task))
 
     async def run(self):
         while True:
-            for service, task in self.tasks.items():
+            for _, task in self.tasks:
                 if task.cancelled():
                     pass
                 elif task.done():
@@ -47,11 +47,11 @@ class ImportBlockchainService(Service):
             await asyncio.sleep(30)
 
     async def on_shutdown(self):
-        for task in self.tasks.values():
+        for _, task in self.tasks:
             task.cancel()
 
         while self.tasks:
-            _, task = self.tasks.popitem()
+            _, task = self.tasks.pop()
 
             try:
                 await task
