@@ -16,6 +16,16 @@
 - Redis
 
 
+## 필수 패키지
+
+Ubuntu 19.04 LTS 기준으로 작성되어 있습니다.
+
+- python3.7
+- python3.7-dev
+- build-essential
+- libgmp3-dev
+- libssl-dev
+
 
 ## 백엔드 서버 실행 방법
 
