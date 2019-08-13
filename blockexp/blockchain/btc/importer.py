@@ -179,21 +179,13 @@ class BtcDaemonImporter(Importer):
 
             db_ops.append(UpdateOne(
                 filter={'hash': block.hash},
-                update={
-                    '$set': row,
-                },
+                update={'$set': row},
                 upsert=True,
             ))
 
             db_ops.append(UpdateOne(
-                filter={
-                    'hash': block.previousBlockHash,
-                },
-                update={
-                    '$set': {
-                        'nextBlockHash': block.hash,
-                    }
-                },
+                filter={'hash': block.previousBlockHash},
+                update={'$set': {'nextBlockHash': block.hash}},
             ))
 
     async def write_txs(self, raw_block: BtcBlock, txs: List[BtcTransaction]):
@@ -204,12 +196,8 @@ class BtcDaemonImporter(Importer):
                 row['value'] = value2amount(tx.value)
 
                 db_ops.append(UpdateOne(
-                    filter={
-                        'txid': tx.txid,
-                    },
-                    update={
-                        '$set': row,
-                    },
+                    filter={'txid': tx.txid},
+                    update={'$set': row},
                     upsert=True,
                 ))
 
