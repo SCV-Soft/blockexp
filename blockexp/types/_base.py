@@ -1,8 +1,9 @@
+from abc import ABC
 from dataclasses import dataclass
 
 
 @dataclass(init=False)
-class Base:
+class Base(ABC):
     chain: str
     network: str
 
