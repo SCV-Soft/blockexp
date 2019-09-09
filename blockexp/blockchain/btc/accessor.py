@@ -15,12 +15,11 @@ class BtcDaemonAccessor(Accessor):
         self.rpc = AsyncBitcoinDeamon(url)
         self.is_legacy_getblock = None
 
-    async def __aenter__(self):
-        await self.rpc.__aenter__()
-        return self
+    async def connect(self):
+        await self.rpc.connect()
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        return await self.rpc.__aexit__(exc_type, exc_val, exc_tb)
+    async def close(self):
+        await self.rpc.close()
 
     def _convert_raw_transaction(self, raw_transaction: dict) -> BtcTransaction:
         return BtcTransaction(**raw_transaction, _raw=raw_transaction)
