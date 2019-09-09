@@ -1,7 +1,6 @@
 from typing import Any, Union, Optional
 
 from hexbytes import HexBytes
-from requests.auth import HTTPBasicAuth
 
 from .types import EthBlock, EthTransaction
 from .web3 import AsyncWeb3
