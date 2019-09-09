@@ -102,37 +102,49 @@ class BtcDaemonAccessor(Accessor):
         if self.is_legacy_getblock is None:
             self.is_legacy_getblock = await self._detect_legacy_getblock(verbosity=verbosity)
 
-        if self.is_legacy_getblock:
-            if verbosity == 0:
-                block = await self.rpc.getblock(block_hash, verbosity=False)
-            elif verbosity == 1:
-                block = await self.rpc.getblock(block_hash, verbosity=True)
-            elif verbosity == 2:
-                block = await self.rpc.getblock(block_hash, verbosity=True)
-
-                txs = []
-                for txid in block['tx']:
-                    try:
-                        tx = await self.rpc.getrawtransaction(txid, verbose=True)
-                        tx = self._convert_raw_transaction(tx)
-                        txs.append(tx)
-                    except JSONRPCError as e:
-                        if e.code == -5:
-                            # TODO: ?
-                            print('txid', txid, 'not found')
-                        else:
-                            raise
-
-                block['tx'] = txs
+        try:
+            if self.is_legacy_getblock:
+                block = await self._legacy_get_block(block_hash, verbosity=verbosity)
             else:
-                raise ValueError
-        else:
-            block = await self.rpc.getblock(block_hash, verbosity=verbosity)
-            if 'tx' in block and block['tx'] and isinstance(block['tx'][0], dict):
-                block['tx'] = [self._convert_raw_transaction(tx) for tx in block['tx']]
+                block = await self.rpc.getblock(block_hash, verbosity=verbosity)
+                if 'tx' in block and block['tx'] and isinstance(block['tx'][0], dict):
+                    block['tx'] = [self._convert_raw_transaction(tx) for tx in block['tx']]
+        except JSONRPCError as e:
+            if e.code == -5 and e.message == "Block not found":
+                raise BlockNotFound(block_hash) from e
+
+            raise
 
         assert isinstance(block, dict)
         return self._convert_raw_block(block)
+
+    async def _legacy_get_block(self, block_hash: str, *, verbosity: int) -> dict:
+        if verbosity == 0:
+            block = await self.rpc.getblock(block_hash, verbosity=False)
+        elif verbosity == 1:
+            block = await self.rpc.getblock(block_hash, verbosity=True)
+        elif verbosity == 2:
+            block = await self.rpc.getblock(block_hash, verbosity=True)
+
+            txs = []
+            for txid in block['tx']:
+                try:
+                    tx = await self.rpc.getrawtransaction(txid, verbose=True)
+                    tx = self._convert_raw_transaction(tx)
+                    txs.append(tx)
+                except JSONRPCError as e:
+                    raise e
+                    if e.code == -5:  # TODO: ?
+                        print("TransactionNotFound", txid)
+                        # raise TransactionNotFound(txid) from e
+                    else:
+                        raise
+
+            block['tx'] = txs
+        else:
+            raise ValueError
+
+        return block
 
     def convert_raw_block(self, raw_block: Any) -> Block:
         assert isinstance(raw_block, BtcBlock)
