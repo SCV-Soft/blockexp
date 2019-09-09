@@ -20,6 +20,10 @@ class JSONRPCException(Exception):
     pass
 
 
+class JSONRPCConnectionError(JSONRPCException):
+    pass
+
+
 class JSONRPCUnauthorized(JSONRPCException):
     pass
 
@@ -192,9 +196,9 @@ class AsyncRequestsTunnel(AsyncTunnel):
                     json=data,
                     auth=self.auth,
                 )
-            except (RemoteProtocolError, RequestsConnectionError):
+            except (RemoteProtocolError, RequestsConnectionError) as e:
                 if repeat >= 4:
-                    raise
+                    raise JSONRPCConnectionError from e
 
                 await asyncio.sleep(0.5)
                 continue
