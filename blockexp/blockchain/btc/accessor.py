@@ -22,11 +22,11 @@ class BtcDaemonAccessor(Accessor):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         return await self.rpc.__aexit__(exc_type, exc_val, exc_tb)
 
-    def _convert_raw_transaction(self, transaction: dict) -> BtcTransaction:
-        return BtcTransaction(**transaction)
+    def _convert_raw_transaction(self, raw_transaction: dict) -> BtcTransaction:
+        return BtcTransaction(**raw_transaction, _raw=raw_transaction)
 
-    def _convert_raw_block(self, block: dict) -> BtcBlock:
-        return BtcBlock(**block)
+    def _convert_raw_block(self, raw_block: dict) -> BtcBlock:
+        return BtcBlock(**raw_block, _raw=raw_block)
 
     def _cast_block(self, block: BtcBlock) -> Block:
         assert len(block.tx) == block.nTx
