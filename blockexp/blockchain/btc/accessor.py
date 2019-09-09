@@ -3,6 +3,7 @@ from typing import Union, Any
 
 from .bitcoind import AsyncBitcoinDeamon
 from .types import BtcTransaction, BtcBlock
+from ...error import BlockNotFound, TransactionNotFound
 from ...model import Block, Transaction, EstimateFee
 from ...types import Accessor
 from ...utils.jsonrpc import JSONRPCError
@@ -92,7 +93,7 @@ class BtcDaemonAccessor(Accessor):
 
     async def _get_block(self, block_id: Union[str, int], *, verbosity: int) -> BtcBlock:
         if isinstance(block_id, int):
-            block_hash = await self.rpc.getblockhash(int(block_id))
+            block_hash = await self.get_block_hash(block_id)
         else:
             block_hash = block_id
 
@@ -143,6 +144,15 @@ class BtcDaemonAccessor(Accessor):
     async def get_block(self, block_id: Union[str, int]) -> Block:
         block = await self._get_block(block_id, verbosity=1)
         return self._cast_block(block)
+
+    async def get_block_hash(self, block_height: int) -> str:
+        try:
+            return await self.rpc.getblockhash(block_height)
+        except JSONRPCError as e:
+            if e.code == -8 and e.message == "Block height out of range":
+                raise BlockNotFound(repr(block_height)) from e
+
+            raise
 
     async def get_raw_block(self, block_id: Union[str, int]) -> BtcBlock:
         return await self._get_block(block_id, verbosity=2)
