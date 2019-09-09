@@ -1,6 +1,8 @@
 import asyncio
+import time
 import traceback
 from collections import defaultdict
+from contextlib import asynccontextmanager
 from enum import Enum
 from typing import Union, List, Optional
 
@@ -15,7 +17,7 @@ from ...database import bulk_write_for, connect_database_for
 from ...model import Block
 from ...types import Importer
 from ...utils import asrow
-from ...utils.jsonrpc import JSONRPCError
+from ...utils.jsonrpc import JSONRPCError, JSONRPCConnectionError
 
 
 class BtcTxOutputType(str, Enum):
@@ -37,16 +39,37 @@ class BtcDaemonImporter(Importer):
         super().__init__(chain, network)
         self.accessor = accessor
         self.app = app
+        self._last_error = time.time()
 
     async def run(self):
+        async with self.accessor:
+            await self.accessor.ping()
+
         while True:
-            try:
-                await self.worker()
-            except Exception:
-                traceback.print_exc()
-                raise
+            async with self.error_handler():
+                async with self.accessor:
+                    await self.worker()
+
+    @asynccontextmanager
+    async def error_handler(self):
+        # noinspection PyBroadException
+        try:
+            yield
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            now = time.time()
+
+            if isinstance(e, JSONRPCConnectionError):
+                print(self.chain, self.network, 'failure connect')
+                await asyncio.sleep(60)
             else:
-                break
+                traceback.print_exc()
+
+                if self._last_error > now - 60:
+                    raise
+
+            self._last_error = now
 
     async def worker(self):
         async with connect_database_for(self.app) as database:
