@@ -77,9 +77,9 @@ class BtcDaemonImporter(Importer):
         invalid = False
         offset = 0
         while True:
-            local_block = await self.get_local_block(height + offset)
+            local_block_hash = await self.get_local_block_hash(height + offset)
             db_block = await self.get_db_block(height + offset)
-            if db_block is not None and local_block is not None and local_block.hash == db_block.hash:
+            if db_block is not None and local_block_hash == db_block.hash:
                 break
 
             invalid = True
@@ -111,6 +111,15 @@ class BtcDaemonImporter(Importer):
     async def get_local_block(self, block_height: int) -> Optional[Block]:
         try:
             return await self.accessor.get_block(block_height)
+        except JSONRPCError as e:
+            if e.code == -8:
+                return None
+
+            raise
+
+    async def get_local_block_hash(self, block_height: int) -> Optional[str]:
+        try:
+            return await self.accessor.get_block_hash(block_height)
         except JSONRPCError as e:
             if e.code == -8:
                 return None
