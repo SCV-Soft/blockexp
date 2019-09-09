@@ -101,21 +101,21 @@ class EthTransaction:
     to: HexBytes = field(
         default=None)  # 20 Bytes | address of the receiver. null when its a contract creation transaction.
 
-    def __init__(self, **raw_block):
-        self.blockHash = as_bytes(raw_block.pop('blockHash'))
-        self.blockNumber = as_int(raw_block.pop('blockNumber'))
-        self.from_ = as_bytes(raw_block.pop('from'))
-        self.gas = as_int(raw_block.pop('gas'))
-        self.gasPrice = as_int(raw_block.pop('gasPrice'))
-        self.hash = as_bytes(raw_block.pop('hash'))
-        self.input = as_bytes(raw_block.pop('input'))
-        self.nonce = as_int(raw_block.pop('nonce'))
-        self.transactionIndex = as_int(raw_block.pop('transactionIndex'))
-        self.value = as_int(raw_block.pop('value'))
-        self.v = as_int(raw_block.pop('v'))
-        self.r = as_bytes(raw_block.pop('r'))
-        self.s = as_bytes(raw_block.pop('s'))
-        self.to = as_bytes(raw_block.pop('to'))
+    def __init__(self, **raw_tx):
+        self.blockHash = as_bytes(raw_tx.pop('blockHash'))
+        self.blockNumber = as_int(raw_tx.pop('blockNumber'))
+        self.from_ = as_bytes(raw_tx.pop('from'))
+        self.gas = as_int(raw_tx.pop('gas'))
+        self.gasPrice = as_int(raw_tx.pop('gasPrice'))
+        self.hash = as_bytes(raw_tx.pop('hash'))
+        self.input = as_bytes(raw_tx.pop('input'))
+        self.nonce = as_int(raw_tx.pop('nonce'))
+        self.transactionIndex = as_int(raw_tx.pop('transactionIndex'))
+        self.value = as_int(raw_tx.pop('value'))
+        self.v = as_int(raw_tx.pop('v'))
+        self.r = as_bytes(raw_tx.pop('r'))
+        self.s = as_bytes(raw_tx.pop('s'))
+        self.to = as_bytes(raw_tx.pop('to'))
 
     @classmethod
     def fix_tx(cls, raw_tx: dict):
