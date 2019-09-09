@@ -18,8 +18,8 @@ class EthBlockchain(Blockchain):
         return EthMongoDatabase(self.chain, self.network, database)
 
     async def ready(self):
-        daemon = self.get_accessor()
-        await daemon.get_local_tip()
+        async with self.get_accessor() as daemon:
+            await daemon.get_local_tip()
 
         async with connect_database_for(self.app) as database:
             db = self.get_db(database)
