@@ -84,9 +84,9 @@ class EthMongoProvider(Provider):
 
     async def get_block(self, block_id: Union[str, int]) -> Block:
         if isinstance(block_id, int):
-            block = await self.db.block_collection.fetch_one({'height': block_id})
+            block = await self.db.block_collection.fetch_one({'height': block_id})  # Block.height
         elif isinstance(block_id, str):
-            block = await self.db.block_collection.fetch_one({'hash': block_id})
+            block = await self.db.block_collection.fetch_one({'hash': block_id})  # Block.hash
         else:
             raise TypeError
 
