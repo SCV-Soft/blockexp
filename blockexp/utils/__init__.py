@@ -6,9 +6,10 @@ from starlette_typed.marshmallow import check_schema
 
 def asrow(obj: Any) -> dict:
     data = asdict(obj)
-    data.pop('_id')
-    data.pop('chain')
-    data.pop('network')
+    data.pop('_id', None)
+    data.pop('_raw', None)
+    data.pop('chain', None)
+    data.pop('network', None)
     return data
 
 
