@@ -21,6 +21,9 @@ class BtcDaemonAccessor(Accessor):
     async def close(self):
         await self.rpc.close()
 
+    async def ping(self) -> None:
+        return await self.rpc.ping()
+
     def _convert_raw_transaction(self, raw_transaction: dict) -> BtcTransaction:
         return BtcTransaction(**raw_transaction, _raw=raw_transaction)
 
