@@ -19,39 +19,37 @@ CHAINS = {
 class ImportBlockchainService(Service):
     def __init__(self, app: Application):
         self.app = app
-        self.tasks: List[Tuple[Blockchain, asyncio.Task]] = []
-        self.watcher = None
+        self.futures: List[Tuple[Blockchain, asyncio.Future]] = []
 
     async def on_startup(self):
         for blockchain in iter_blockchain(self.app):
             self.run_service(blockchain)
 
-        # self.watcher = asyncio.ensure_future(self.run())
-
     def run_service(self, blockchain: Blockchain):
         importer = blockchain.get_importer()
         if importer is not None:
-            task: asyncio.Future = asyncio.ensure_future(importer.run())
-            self.tasks.append((blockchain, task))
+            future: asyncio.Future = asyncio.ensure_future(importer.run())
+            self.futures.append((blockchain, future))
 
     async def run(self):
         while True:
-            for _, task in self.tasks:
-                if task.cancelled():
+            for _, future in self.futures:
+                if future.cancelled():
                     pass
-                elif task.done():
-                    exc = task.exception()
+                elif future.done():
+                    exc = future.exception()
                     if exc is None:
                         pass
 
             await asyncio.sleep(30)
 
     async def on_shutdown(self):
-        for _, task in self.tasks:
-            task.cancel()
+        for _, task in self.futures:
+            if not task.done():
+                task.cancel()
 
-        while self.tasks:
-            _, task = self.tasks.pop()
+        while self.futures:
+            _, task = self.futures.pop()
 
             try:
                 await task
