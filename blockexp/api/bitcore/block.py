@@ -70,6 +70,16 @@ async def get_block(request: Request, path: BlockIdApiPath, provider: Provider) 
     return await provider.get_block(block_id)
 
 
+@api.route('/{block_id}/raw', methods=['GET'])
+@typed_endpoint(tags=["bitcore-ext"])
+async def get_raw_block(request: Request, path: BlockIdApiPath, provider: Provider) -> dict:
+    block_id = path.block_id
+    if block_id.isdecimal():
+        block_id = int(block_id)
+
+    return await provider.get_raw_block(block_id)
+
+
 @dataclass
 class BlockBeforeTimeApiPath(ApiPath):
     time: str
