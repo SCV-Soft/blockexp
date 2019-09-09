@@ -95,6 +95,19 @@ class EthMongoProvider(Provider):
 
         return block
 
+    async def get_raw_block(self, block_id: Union[str, int]) -> dict:
+        if isinstance(block_id, int):
+            raw_block = await self.db.raw_block_collection.fetch_one({'number': block_id})  # EthBlock.number
+        elif isinstance(block_id, str):
+            raw_block = await self.db.raw_block_collection.fetch_one({'hash': block_id})  # EthBlock.hash
+        else:
+            raise TypeError
+
+        if raw_block is None:
+            raise BlockNotFound(block_id)
+
+        return raw_block
+
     async def stream_transactions(self,
                                   block_height: Optional[int] = None,
                                   block_hash: Optional[str] = None,

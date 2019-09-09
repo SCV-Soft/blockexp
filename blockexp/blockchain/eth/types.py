@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import NewType, List, cast, Optional
-from typing import Union
-
 from datetime import datetime
+from typing import List, Optional, Union
+
 from hexbytes import HexBytes
 
 
@@ -21,6 +20,7 @@ def as_int(s: Union[str, int]) -> int:
 
 @dataclass(init=False)
 class EthBlock:
+    _raw: dict = field(repr=False)
     number: int  # the block number. null when its pending block.
     hash: HexBytes  # 32 Bytes | hash of the block. null when its pending block.
     parentHash: HexBytes  # 32 Bytes | hash of the parent block.
@@ -44,6 +44,7 @@ class EthBlock:
     mixHash: str
 
     def __init__(self, **raw_block):
+        self._raw = raw_block.copy()
         self.number = as_int(raw_block.pop('number'))
         self.hash = as_bytes(raw_block.pop('hash'))
         self.parentHash = as_bytes(raw_block.pop('parentHash'))
@@ -85,6 +86,7 @@ class EthBlock:
 
 @dataclass(init=False)
 class EthTransaction:
+    _raw: dict = field(repr=False)
     blockHash: HexBytes  # 32 Bytes | hash of the block where this transaction was in. null when its pending.
     blockNumber: int  # block number where this transaction was in. null when its pending.
     from_: HexBytes  # 20 Bytes | address of the sender.
@@ -102,6 +104,7 @@ class EthTransaction:
         default=None)  # 20 Bytes | address of the receiver. null when its a contract creation transaction.
 
     def __init__(self, **raw_tx):
+        self._raw = raw_tx.copy()
         self.blockHash = as_bytes(raw_tx.pop('blockHash'))
         self.blockNumber = as_int(raw_tx.pop('blockNumber'))
         self.from_ = as_bytes(raw_tx.pop('from'))

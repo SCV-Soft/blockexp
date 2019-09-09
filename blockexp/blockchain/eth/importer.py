@@ -106,6 +106,14 @@ class EthDaemonImporter(Importer):
             {'blockHeight': {'$gte': height}}
         )
 
+        await self.db.raw_block_collection.delete_many(
+            {'number': {'$gte': height}}
+        )
+
+        await self.db.raw_tx_collection.delete_many(
+            {'blockNumber': {'$gte': height}}
+        )
+
     async def import_block(self, height: int):
         print(self.chain, self.network, 'processing', height, 'block')
         raw_block: EthBlock = await self.accessor.get_raw_block(height)
@@ -115,6 +123,13 @@ class EthDaemonImporter(Importer):
 
     async def write_block(self, raw_block: EthBlock):
         block: Block = self.accessor.convert_raw_block(raw_block)
+
+        # noinspection PyProtectedMember
+        await self.db.raw_block_collection.update_one(
+            filter={'hash': block.hash},
+            update={'$set': raw_block._raw},
+            upsert=True,
+        )
 
         async with bulk_write_for(self.db.block_collection, ordered=False) as db_ops:
             assert isinstance(block.nonce, int)
@@ -133,6 +148,15 @@ class EthDaemonImporter(Importer):
             ))
 
     async def write_txs(self, raw_block: EthBlock, txs: List[EthTransaction]):
+        async with bulk_write_for(self.db.raw_tx_collection, ordered=False) as db_ops:
+            for raw_tx in txs:
+                # noinspection PyProtectedMember
+                db_ops.append(UpdateOne(
+                    filter={'hash': raw_tx.hash},
+                    update={'$set': raw_tx._raw},
+                    upsert=True,
+                ))
+
         async with bulk_write_for(self.db.tx_collection, ordered=False) as db_ops:
             for raw_tx in txs:
                 tx = self.accessor.convert_raw_transaction(raw_tx, raw_block)
