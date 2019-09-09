@@ -40,6 +40,9 @@ class Provider(Base):
     async def get_block(self, block_id: Union[str, int]) -> Block:
         raise NotImplementedError
 
+    async def get_raw_block(self, block_id: Union[str, int]) -> dict:
+        raise NotImplementedError
+
     async def stream_transactions(self,
                                   block_height: int,
                                   block_hash: str,
