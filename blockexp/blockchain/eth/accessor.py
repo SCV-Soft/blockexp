@@ -18,6 +18,12 @@ class EthDaemonAccessor(Accessor):
         self.rpc = AsyncWeb3(url)
         self.is_legacy_getblock = None
 
+    async def connect(self):
+        await self.rpc.connect()
+
+    async def close(self):
+        await self.rpc.close()
+
     def _cast_block(self, raw_block: EthBlock) -> Block:
         return Block(
             chain=self.chain,
