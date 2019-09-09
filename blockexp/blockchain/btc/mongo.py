@@ -14,6 +14,8 @@ class BtcMongoDatabase(BlockchainMongoDatabase):
     coin_collection: BlockchainMongoCollection[Coin]
     wallet_collection: BlockchainMongoCollection[Wallet]
     wallet_address_collection: BlockchainMongoCollection[WalletAddress]
+    raw_block_collection: BlockchainMongoCollection[dict]
+    raw_tx_collection: BlockchainMongoCollection[dict]
 
     def __init__(self, chain: str, network: str, database: MongoDatabase):
         super().__init__(chain, network, database)
@@ -22,6 +24,8 @@ class BtcMongoDatabase(BlockchainMongoDatabase):
         self.coin_collection = self.new_collection('coins', self.convert_raw_coin, self.fetch_block_tip)
         self.wallet_collection = self.new_collection('wallets', self.convert_raw_wallet, self.fetch_block_tip)
         self.wallet_address_collection = self.new_collection('walletaddresses', self.convert_raw_wallet_address, None)
+        self.raw_block_collection = self.new_collection('raw_blocks', dict, None)
+        self.raw_tx_collection = self.new_collection('raw_transactions', dict, None)
 
     async def create_indexes(self):
         # block
@@ -57,6 +61,15 @@ class BtcMongoDatabase(BlockchainMongoDatabase):
         # walletaddresses
         await self.wallet_address_collection.create_index(index(address=1, wallet=1), background=True, unique=True)
         await self.wallet_address_collection.create_index(index(wallet=1, address=1), background=True, unique=True)
+
+        # raw blocks
+        await self.raw_block_collection.create_index(index(hash=1), background=True)
+        await self.raw_block_collection.create_index(index(height=1), background=True)
+
+        # raw transactions
+        await self.raw_tx_collection.create_index(index(txid=1), background=True)
+        await self.raw_tx_collection.create_index(index(_blockhash=1), background=True)
+        await self.raw_tx_collection.create_index(index(_blockheight=1), background=True)
 
     async def fetch_block_tip(self):
         raw_block: Optional[dict] = await self.block_collection.find_one(sort=[('height', DESCENDING)])

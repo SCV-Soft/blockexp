@@ -102,9 +102,9 @@ class BtcMongoProvider(Provider):
 
     async def get_block(self, block_id: Union[str, int]) -> Block:
         if isinstance(block_id, int):
-            block = await self.db.block_collection.fetch_one({'height': block_id})
+            block = await self.db.block_collection.fetch_one({'height': block_id})  # Block.height
         elif isinstance(block_id, str):
-            block = await self.db.block_collection.fetch_one({'hash': block_id})
+            block = await self.db.block_collection.fetch_one({'hash': block_id})  # Block.hash
         else:
             raise TypeError
 
@@ -112,6 +112,19 @@ class BtcMongoProvider(Provider):
             raise BlockNotFound(block_id)
 
         return block
+
+    async def get_raw_block(self, block_id: Union[str, int]) -> dict:
+        if isinstance(block_id, int):
+            raw_block = await self.db.raw_block_collection.fetch_one({'height': block_id})  # BtcBlock.height
+        elif isinstance(block_id, str):
+            raw_block = await self.db.raw_block_collection.fetch_one({'hash': block_id})  # BtcBlock.hash
+        else:
+            raise TypeError
+
+        if raw_block is None:
+            raise BlockNotFound(block_id)
+
+        return raw_block
 
     async def stream_transactions(self,
                                   block_height: Optional[int] = None,

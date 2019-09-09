@@ -45,6 +45,7 @@ class BtcVOut:
 
 @dataclass
 class BtcTransaction:
+    _raw: dict = field(repr=False)
     txid: str
     hash: str
     version: int
@@ -80,8 +81,9 @@ class BtcTransaction:
 
     @classmethod
     def load(cls, raw_tx: dict):
-        cls.fix_tx(raw_tx)
-        return cls(**raw_tx)
+        tx = raw_tx.copy()
+        cls.fix_tx(tx)
+        return cls(**tx, _raw=raw_tx)
 
     @classmethod
     def fix_tx(cls, raw_tx):
@@ -92,6 +94,7 @@ class BtcTransaction:
 class BtcBlock:
     TRANSACTION_CLASS = BtcTransaction
 
+    _raw: dict = field(repr=False)
     hash: str  # (string) the block hash (same as provided)
     confirmations: int  # (numeric) The number of confirmations, or -1 if the block is not on the main chain
     size: int  # (numeric) The block size
@@ -122,8 +125,9 @@ class BtcBlock:
 
     @classmethod
     def load(cls, raw_block: dict):
-        cls.fix_block(raw_block)
-        return cls(**raw_block)
+        block = raw_block.copy()
+        cls.fix_block(block)
+        return cls(**block, _raw=raw_block)
 
     @classmethod
     def fix_block(cls, raw_block):

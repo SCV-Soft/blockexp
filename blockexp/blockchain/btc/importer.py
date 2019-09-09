@@ -146,6 +146,14 @@ class BtcDaemonImporter(Importer):
             {'blockHeight': {'$gte': height}}
         )
 
+        await self.db.raw_block_collection.delete_many(
+            {'height': {'$gte': height}}
+        )
+
+        await self.db.raw_tx_collection.delete_many(
+            {'_blockheight': {'$gte': height}}
+        )
+
     async def import_block(self, height: int):
         print(self.chain, self.network, 'processing', height, 'block')
         raw_block: BtcBlock = await self.accessor.get_raw_block(height)
@@ -173,6 +181,18 @@ class BtcDaemonImporter(Importer):
         block: Block = self.accessor.convert_raw_block(raw_block)
         block.reward = self.get_block_reward(raw_block) or 0
 
+        async with bulk_write_for(self.db.raw_block_collection, ordered=False) as db_ops:
+            db_ops.append(UpdateOne(
+                filter={'hash': block.hash},
+                update={'$set': asrow(raw_block)},
+                upsert=True,
+            ))
+
+            db_ops.append(UpdateOne(
+                filter={'hash': block.previousBlockHash},
+                update={'$set': {'nextblockhash': block.hash}},
+            ))
+
         async with bulk_write_for(self.db.block_collection, ordered=False) as db_ops:
             row = asrow(block)
             row['reward'] = value2amount(block.reward) if block.reward is not None else None
@@ -189,6 +209,18 @@ class BtcDaemonImporter(Importer):
             ))
 
     async def write_txs(self, raw_block: BtcBlock, txs: List[BtcTransaction]):
+        async with bulk_write_for(self.db.raw_tx_collection, ordered=False) as db_ops:
+            for raw_tx in txs:
+                row = asrow(raw_tx)
+                row['_blockhash'] = raw_block.hash
+                row['_blockheight'] = raw_block.height
+
+                db_ops.append(UpdateOne(
+                    filter={'txid': raw_tx.txid},
+                    update={'$set': row},
+                    upsert=True,
+                ))
+
         async with bulk_write_for(self.db.tx_collection, ordered=False) as db_ops:
             for raw_tx in txs:
                 tx = self.accessor.convert_raw_transaction(raw_tx, raw_block)
