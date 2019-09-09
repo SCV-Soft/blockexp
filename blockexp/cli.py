@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import TextIO
 
 import click
@@ -21,6 +22,8 @@ def start(config: TextIO = None):
             cfg = toml.load(config)
     else:
         cfg = {}
+
+    logging.basicConfig(level=logging.INFO)
 
     app: Application = asyncio.run(init_app(cfg))
     app.serve()
