@@ -5,6 +5,7 @@ from .btc import BtcBlockchain
 from .eth import EthBlockchain
 from .jack import JackBlockchain
 from .pch import PchBlockchain
+from .able import AbleBlockchain
 from ..application import Application
 from ..types import Blockchain, Service
 
@@ -12,6 +13,7 @@ CHAINS = {
     "BTC": BtcBlockchain,
     "ETH": EthBlockchain,
     "JACK": JackBlockchain,
+    "ABLE": AbleBlockchain,
     "PCH": PchBlockchain,
 }
 
