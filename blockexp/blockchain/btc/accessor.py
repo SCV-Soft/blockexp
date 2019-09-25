@@ -133,10 +133,11 @@ class BtcDaemonAccessor(Accessor):
                     tx = self._convert_raw_transaction(tx)
                     txs.append(tx)
                 except JSONRPCError as e:
-                    raise e
-                    if e.code == -5:  # TODO: ?
+                    if e.message == "No such mempool or blockchain transaction. Use gettransaction for wallet transactions." and \
+                       e.code == -5:
                         print("TransactionNotFound", txid)
-                        # raise TransactionNotFound(txid) from e
+                        if block['height'] != 0:
+                            raise TransactionNotFound(txid) from e
                     else:
                         raise
 
