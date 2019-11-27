@@ -6,8 +6,8 @@ from starlette.routing import Router
 
 from starlette_typed.endpoint import register_handler
 from ...blockchain import get_blockchain
-from ...database import connect_database
-from ...types import Provider
+from ...database import connect_database, MongoDatabase
+from ...types import Blockchain, Provider, Accessor
 
 
 @dataclass
@@ -16,21 +16,35 @@ class ApiPath:
     network: str
 
 
-@register_handler
-@asynccontextmanager
-async def provider(request: Request) -> Provider:
+def get_blockchain_from_request(request: Request) -> Blockchain:
     path_params = request.path_params
     chain = path_params['chain']
     network = path_params['network']
 
-    async with connect_database(request) as database:
-        blockchain = get_blockchain(chain, network, request.app)
-        if blockchain is None:
-            raise NotImplementedError((chain, network))
+    blockchain = get_blockchain(chain, network, request.app)
+    if blockchain is None:
+        raise NotImplementedError((chain, network))
 
+    return blockchain
+
+
+@register_handler
+@asynccontextmanager
+async def provider(request: Request) -> Provider:
+    blockchain = get_blockchain_from_request(request)
+    async with connect_database(request) as database:
         # noinspection PyShadowingNames
         async with blockchain.get_provider(database) as provider:
             yield provider
+
+
+@register_handler
+@asynccontextmanager
+async def accessor(request: Request) -> Accessor:
+    blockchain = get_blockchain_from_request(request)
+    # noinspection PyShadowingNames
+    async with blockchain.get_accessor() as accessor:
+        yield accessor
 
 
 def build_api() -> Router:

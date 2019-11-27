@@ -8,7 +8,7 @@ from starlette_typed import typed_endpoint
 from . import ApiPath
 from ...model import Transaction, CoinListing, Authhead, TransactionId
 from ...model.options import Direction, SteamingFindOptions
-from ...types import Provider
+from ...types import Provider, Accessor
 
 api = Router()
 
@@ -73,6 +73,6 @@ class BroadcastTransactionRequest:
 
 @api.route('/send', methods=['POST'])
 @typed_endpoint(tags=["bitcore"])
-async def broadcast_transaction(request: Request, path: ApiPath, provider: Provider,
+async def broadcast_transaction(request: Request, path: ApiPath, accessor: Accessor,
                                 body: BroadcastTransactionRequest) -> TransactionId:
-    return await provider.broadcast_transaction(body.rawTx)
+    return await accessor.broadcast_transaction(body.rawTx)

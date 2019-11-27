@@ -4,7 +4,7 @@ from typing import Union, Any
 from .bitcoind import AsyncBitcoinDeamon
 from .types import BtcTransaction, BtcBlock
 from ...error import BlockNotFound, TransactionNotFound
-from ...model import Block, Transaction, EstimateFee
+from ...model import Block, Transaction, EstimateFee, TransactionId
 from ...types import Accessor
 from ...utils.jsonrpc import JSONRPCError
 
@@ -186,3 +186,7 @@ class BtcDaemonAccessor(Accessor):
 
     async def get_fee(self, target: int) -> EstimateFee:
         return EstimateFee(**(await self.rpc.estimatesmartfee(target)))
+
+    async def broadcast_transaction(self, raw_tx: str) -> TransactionId:
+        txid = await self.rpc.sendrawtransaction(raw_tx)
+        return TransactionId(txid)

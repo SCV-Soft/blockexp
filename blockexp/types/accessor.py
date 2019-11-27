@@ -4,7 +4,7 @@ from typing import Union, TypeVar
 
 from ._base import Base
 from .connectable import Connectable
-from ..model import Block, Transaction, EstimateFee
+from ..model import Block, Transaction, EstimateFee, TransactionId
 
 T = TypeVar('T')
 
@@ -25,4 +25,8 @@ class Accessor(Connectable, Base, ABC):
 
     @abstractmethod
     async def get_local_tip(self) -> Block:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def broadcast_transaction(self, raw_tx: str) -> TransactionId:
         raise NotImplementedError

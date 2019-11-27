@@ -360,8 +360,7 @@ class BtcMongoProvider(Provider):
         return await self.accessor.get_fee(target)
 
     async def broadcast_transaction(self, raw_tx: str) -> TransactionId:
-        txid = await self.rpc.sendrawtransaction(raw_tx)
-        return TransactionId(txid)
+        return await self.accessor.broadcast_transaction(raw_tx)
 
     async def get_coins_for_tx(self, tx_id: str) -> CoinListing:
         return CoinListing(
