@@ -6,7 +6,7 @@ from starlette.routing import Router
 from starlette_typed import typed_endpoint
 from . import ApiPath
 from ...model import EstimateFee
-from ...types import Provider
+from ...types import Accessor
 
 api = Router()
 
@@ -18,5 +18,5 @@ class GetFeeApiPath(ApiPath):
 
 @api.route('/{target:int}', methods=['GET'])
 @typed_endpoint(tags=["bitcore"])
-async def get_fee(request: Request, path: GetFeeApiPath, provider: Provider) -> EstimateFee:
-    return await provider.get_fee(path.target)
+async def get_fee(request: Request, path: GetFeeApiPath, accessor: Accessor) -> EstimateFee:
+    return await accessor.get_fee(path.target)
