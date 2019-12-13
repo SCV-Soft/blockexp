@@ -356,12 +356,6 @@ class BtcMongoProvider(Provider):
 
         return wallet
 
-    async def get_fee(self, target: int) -> EstimateFee:
-        return await self.accessor.get_fee(target)
-
-    async def broadcast_transaction(self, raw_tx: str) -> TransactionId:
-        return await self.accessor.broadcast_transaction(raw_tx)
-
     async def get_coins_for_tx(self, tx_id: str) -> CoinListing:
         return CoinListing(
             inputs=(await self.db.coin_collection.fetch_all({'spentTxid': tx_id})),

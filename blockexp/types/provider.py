@@ -120,14 +120,6 @@ class Provider(Base, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_fee(self, target: int) -> EstimateFee:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def broadcast_transaction(self, raw_tx: str) -> TransactionId:
-        raise NotImplementedError
-
-    @abstractmethod
     async def get_coins_for_tx(self, tx_id: str) -> CoinListing:
         raise NotImplementedError
 

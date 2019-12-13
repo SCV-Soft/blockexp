@@ -177,13 +177,6 @@ class EthMongoProvider(Provider):
     async def get_wallet(self, pub_key: str) -> Wallet:
         raise NotImplementedError
 
-    async def get_fee(self, target: int) -> EstimateFee:
-        return await self.accessor.get_fee(target)
-
-    async def broadcast_transaction(self, raw_tx: str) -> TransactionId:
-        raise NotImplementedError
-        return TransactionId(txid)
-
     async def get_coins_for_tx(self, tx_id: str) -> CoinListing:
         tx = await self.get_transaction(tx_id)
         input_coin = Coin(
